@@ -790,6 +790,155 @@ export default function DrivingSimulation () {
       }
     }
 
+    // Create bus - larger vehicle with different appearance
+    function createBus(x, z, direction) {
+      const busGroup = new THREE.Group()
+
+      // Bus body - larger and taller than cars
+      const bodyGeometry = new THREE.BoxGeometry(1.2, 1.1, 3.2) // Increased height from 0.8 to 1.1
+      const bodyMaterial = new THREE.MeshStandardMaterial({
+        color: 0x3366cc, // Blue buses
+        roughness: 0.4,
+        metalness: 0.6
+      })
+      const body = new THREE.Mesh(bodyGeometry, bodyMaterial)
+      body.position.y = 0.55 // Raised position from 0.4 to 0.55
+      busGroup.add(body)
+
+      // Bus top - slightly smaller than body
+      const topGeometry = new THREE.BoxGeometry(1.1, 0.2, 3.0)
+      const topMaterial = new THREE.MeshStandardMaterial({
+        color: 0x3366cc,
+        roughness: 0.4,
+        metalness: 0.6
+      })
+      const top = new THREE.Mesh(topGeometry, topMaterial)
+      top.position.set(0, 1.2, 0) // Raised from 0.9 to 1.2
+      busGroup.add(top)
+
+      // Windows - adding windows on both sides - positioned higher
+      const windowMaterial = new THREE.MeshStandardMaterial({
+        color: 0xaaddff,
+        roughness: 0.1,
+        metalness: 0.9,
+        transparent: true,
+        opacity: 0.7
+      })
+
+      // Add multiple windows on each side
+      for (let i = -1.2; i <= 1.2; i += 0.6) {
+        // Right side windows
+        const rightWindow = new THREE.Mesh(
+          new THREE.PlaneGeometry(0.5, 0.4),
+          windowMaterial
+        )
+        rightWindow.position.set(0.61, 0.9, i) // Raised from 0.7 to 0.9
+        rightWindow.rotation.y = Math.PI / 2
+        busGroup.add(rightWindow)
+
+        // Left side windows
+        const leftWindow = new THREE.Mesh(
+          new THREE.PlaneGeometry(0.5, 0.4),
+          windowMaterial
+        )
+        leftWindow.position.set(-0.61, 0.9, i) // Raised from 0.7 to 0.9
+        leftWindow.rotation.y = -Math.PI / 2
+        busGroup.add(leftWindow)
+      }
+
+      // Windshield
+      const windshield = new THREE.Mesh(
+        new THREE.PlaneGeometry(1.0, 0.5),
+        windowMaterial
+      )
+      windshield.position.set(0, 0.9, 1.61) // Raised from 0.7 to 0.9
+      busGroup.add(windshield)
+
+      // Wheels - larger than car wheels
+      const wheelGeometry = new THREE.CylinderGeometry(0.25, 0.25, 0.2, 16)
+      const wheelMaterial = new THREE.MeshStandardMaterial({ color: 0x111111 })
+
+      const wheel1 = new THREE.Mesh(wheelGeometry, wheelMaterial)
+      wheel1.position.set(0.65, 0.25, 1.2)
+      wheel1.rotation.z = Math.PI / 2
+      busGroup.add(wheel1)
+
+      const wheel2 = new THREE.Mesh(wheelGeometry, wheelMaterial)
+      wheel2.position.set(-0.65, 0.25, 1.2)
+      wheel2.rotation.z = Math.PI / 2
+      busGroup.add(wheel2)
+
+      const wheel3 = new THREE.Mesh(wheelGeometry, wheelMaterial)
+      wheel3.position.set(0.65, 0.25, 0)
+      wheel3.rotation.z = Math.PI / 2
+      busGroup.add(wheel3)
+
+      const wheel4 = new THREE.Mesh(wheelGeometry, wheelMaterial)
+      wheel4.position.set(-0.65, 0.25, 0)
+      wheel4.rotation.z = Math.PI / 2
+      busGroup.add(wheel4)
+
+      const wheel5 = new THREE.Mesh(wheelGeometry, wheelMaterial)
+      wheel5.position.set(0.65, 0.25, -1.2)
+      wheel5.rotation.z = Math.PI / 2
+      busGroup.add(wheel5)
+
+      const wheel6 = new THREE.Mesh(wheelGeometry, wheelMaterial)
+      wheel6.position.set(-0.65, 0.25, -1.2)
+      wheel6.rotation.z = Math.PI / 2
+      busGroup.add(wheel6)
+
+      // Headlights
+      const headlightGeometry = new THREE.SphereGeometry(0.1, 16, 16)
+      const headlightMaterial = new THREE.MeshStandardMaterial({
+        color: 0xffffcc,
+        emissive: 0xffffcc,
+        emissiveIntensity: 0.5
+      })
+
+      const headlight1 = new THREE.Mesh(headlightGeometry, headlightMaterial)
+      headlight1.position.set(0.5, 0.4, 1.61)
+      busGroup.add(headlight1)
+
+      const headlight2 = new THREE.Mesh(headlightGeometry, headlightMaterial)
+      headlight2.position.set(-0.5, 0.4, 1.61)
+      busGroup.add(headlight2)
+
+      // Taillights
+      const taillightMaterial = new THREE.MeshStandardMaterial({
+        color: 0xff0000,
+        emissive: 0xff0000,
+        emissiveIntensity: 0.5
+      })
+
+      const taillight1 = new THREE.Mesh(headlightGeometry, taillightMaterial)
+      taillight1.position.set(0.5, 0.4, -1.61)
+      busGroup.add(taillight1)
+
+      const taillight2 = new THREE.Mesh(headlightGeometry, taillightMaterial)
+      taillight2.position.set(-0.5, 0.4, -1.61)
+      busGroup.add(taillight2)
+
+      busGroup.position.set(x, 0, z)
+
+      if (direction === 'horizontal') {
+        busGroup.rotation.y = Math.PI / 2
+      }
+
+      busGroup.castShadow = true
+      busGroup.receiveShadow = true
+      scene.add(busGroup)
+
+      return {
+        mesh: busGroup,
+        direction: direction,
+        speed: 0.06 + Math.random() * 0.04, // Buses move slower than most cars
+        lastTurnTime: 0,
+        turnProbability: 0.005 + Math.random() * 0.01, // Buses turn less frequently
+        isBus: true // Flag to identify as a bus
+      }
+    }
+
     // Add cars to roads
     for (let i = 0; i < 130; i++) {
       let x, z, direction, movingDirection
@@ -848,6 +997,45 @@ export default function DrivingSimulation () {
       }
 
       cars.push(car)
+    }
+
+    // Add buses to roads - Add this code after the existing car creation loop
+    const buses = []
+    for (let i = 0; i < 25; i++) { // Add 25 buses to the city
+      let x, z, direction, movingDirection
+
+      if (Math.random() > 0.5) {
+        // Horizontal road
+        direction = 'horizontal'
+        movingDirection = Math.random() > 0.5 ? 1 : -1 // Random direction
+        const roadIndex = Math.floor(Math.random() * (gridSize + 1))
+        z = roadIndex * (blockSize + streetWidth) - citySize / 2 - streetWidth / 2 + streetWidth / 2
+        x = (Math.random() - 0.5) * citySize
+      } else {
+        // Vertical road
+        direction = 'vertical'
+        movingDirection = Math.random() > 0.5 ? 1 : -1 // Random direction
+        const roadIndex = Math.floor(Math.random() * (gridSize + 1))
+        x = roadIndex * (blockSize + streetWidth) - citySize / 2 - streetWidth / 2 + streetWidth / 2
+        z = (Math.random() - 0.5) * citySize
+      }
+
+      const bus = createBus(x, z, direction)
+
+      // Set bus speed (slower than cars)
+      bus.speed *= movingDirection
+
+      // Rotate bus if moving in negative direction
+      if (movingDirection < 0) {
+        if (direction === 'horizontal') {
+          bus.mesh.rotation.y += Math.PI
+        } else {
+          bus.mesh.rotation.y += Math.PI
+        }
+      }
+
+      // Add to array of vehicles
+      cars.push(bus) // Add buses to the cars array to use the same movement logic
     }
 
     // Create people
