@@ -202,32 +202,89 @@ export default function DrivingSimulation () {
         // Create 1-4 buildings per block
         const buildingsPerBlock = Math.floor(Math.random() * 4) + 1
 
+        // Increase safety margin to ensure buildings don't overflow onto roads
+        const safetyMargin = 3
+        const maxBuildingWidth = blockSize - safetyMargin * 2
+        const maxBuildingDepth = blockSize - safetyMargin * 2
+
         if (buildingsPerBlock === 1) {
-          // One large building
+          // One large building - now with stricter size limits
           const height = 10 + Math.random() * 40
-          createBuilding(
-            blockX,
-            blockZ,
-            blockSize * 0.8,
-            blockSize * 0.8,
-            height
-          )
-        } else {
-          // Multiple smaller buildings
-          const subBlockSize = blockSize / Math.sqrt(buildingsPerBlock)
-          for (let k = 0; k < buildingsPerBlock; k++) {
-            const offsetX = (Math.random() - 0.5) * (blockSize - subBlockSize)
-            const offsetZ = (Math.random() - 0.5) * (blockSize - subBlockSize)
-            const height = 5 + Math.random() * 25
-            const width = subBlockSize * (0.5 + Math.random() * 0.5)
-            const depth = subBlockSize * (0.5 + Math.random() * 0.5)
+          // Ensure building size stays well within block boundaries
+          const buildingWidth = Math.min(blockSize * 0.7, maxBuildingWidth)
+          const buildingDepth = Math.min(blockSize * 0.7, maxBuildingDepth)
+
+          // Verify the building won't overlap with roads
+          const halfWidth = buildingWidth / 2
+          const halfDepth = buildingDepth / 2
+          const blockLeftEdge = blockX - blockSize / 2
+          const blockRightEdge = blockX + blockSize / 2
+          const blockTopEdge = blockZ - blockSize / 2
+          const blockBottomEdge = blockZ + blockSize / 2
+
+          // Ensure building stays within block boundaries
+          if (blockLeftEdge + halfWidth + safetyMargin <= blockX &&
+              blockX + halfWidth + safetyMargin <= blockRightEdge &&
+              blockTopEdge + halfDepth + safetyMargin <= blockZ &&
+              blockZ + halfDepth + safetyMargin <= blockBottomEdge) {
             createBuilding(
-              blockX + offsetX,
-              blockZ + offsetZ,
-              width,
-              depth,
+              blockX,
+              blockZ,
+              buildingWidth,
+              buildingDepth,
               height
             )
+          }
+        } else {
+          // Multiple smaller buildings
+          // Use a smaller portion of the block to ensure spacing between buildings
+          const subBlockSize = Math.min(blockSize / Math.sqrt(buildingsPerBlock + 1), maxBuildingWidth * 0.8)
+
+          for (let k = 0; k < buildingsPerBlock; k++) {
+            // Calculate maximum allowed offset with enhanced safety
+            const maxOffset = Math.min(
+              (blockSize - safetyMargin * 2 - subBlockSize) / 2,
+              blockSize / 4
+            )
+
+            // Limit the offset to stay well within boundaries
+            const offsetX = (Math.random() - 0.5) * maxOffset * 2
+            const offsetZ = (Math.random() - 0.5) * maxOffset * 2
+
+            const height = 5 + Math.random() * 25
+
+            // More conservative width and depth calculations
+            const maxWidth = Math.min(subBlockSize * 0.8, (maxBuildingWidth - Math.abs(offsetX) * 2) * 0.8)
+            const maxDepth = Math.min(subBlockSize * 0.8, (maxBuildingDepth - Math.abs(offsetZ) * 2) * 0.8)
+
+            const width = maxWidth * (0.6 + Math.random() * 0.3)
+            const depth = maxDepth * (0.6 + Math.random() * 0.3)
+
+            // Calculate building edges
+            const buildingLeft = blockX + offsetX - width / 2
+            const buildingRight = blockX + offsetX + width / 2
+            const buildingTop = blockZ + offsetZ - depth / 2
+            const buildingBottom = blockZ + offsetZ + depth / 2
+
+            // Calculate block boundaries
+            const blockLeft = blockX - blockSize / 2 + safetyMargin
+            const blockRight = blockX + blockSize / 2 - safetyMargin
+            const blockTop = blockZ - blockSize / 2 + safetyMargin
+            const blockBottom = blockZ + blockSize / 2 - safetyMargin
+
+            // Only create the building if it stays completely within the safe block area
+            if (buildingLeft >= blockLeft &&
+                buildingRight <= blockRight &&
+                buildingTop >= blockTop &&
+                buildingBottom <= blockBottom) {
+              createBuilding(
+                blockX + offsetX,
+                blockZ + offsetZ,
+                width,
+                depth,
+                height
+              )
+            }
           }
         }
       }
@@ -723,7 +780,6 @@ export default function DrivingSimulation () {
           // Check if car reached the edge of the city
           if ((car.speed > 0 && car.mesh.position.x > citySize / 2) ||
               (car.speed < 0 && car.mesh.position.x < -citySize / 2)) {
-
             // Find the nearest road intersection
             const nearestRoadIndex = Math.round((car.mesh.position.z + citySize / 2) / (blockSize + streetWidth))
             const nearestRoadZ = nearestRoadIndex * (blockSize + streetWidth) - citySize / 2 - streetWidth / 2 + streetWidth / 2
@@ -802,7 +858,6 @@ export default function DrivingSimulation () {
           // Check if car reached the edge of the city
           if ((car.speed > 0 && car.mesh.position.z > citySize / 2) ||
               (car.speed < 0 && car.mesh.position.z < -citySize / 2)) {
-
             // Find the nearest road intersection
             const nearestRoadIndex = Math.round((car.mesh.position.x + citySize / 2) / (blockSize + streetWidth))
             const nearestRoadX = nearestRoadIndex * (blockSize + streetWidth) - citySize / 2 - streetWidth / 2 + streetWidth / 2
