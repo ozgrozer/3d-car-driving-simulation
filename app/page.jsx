@@ -428,7 +428,7 @@ export default function DrivingSimulation () {
     }
 
     // Play nitro sound
-    function playNitroSound() {
+    function playNitroSound () {
       if (!audioContext) initAudio()
 
       if (!isNitroSoundPlaying) {
@@ -441,11 +441,16 @@ export default function DrivingSimulation () {
 
         // Create noise for the whoosh effect
         const bufferSize = audioContext.sampleRate * 0.5
-        const noiseBuffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate)
+        const noiseBuffer = audioContext.createBuffer(
+          1,
+          bufferSize,
+          audioContext.sampleRate
+        )
         const noiseData = noiseBuffer.getChannelData(0)
 
         for (let i = 0; i < bufferSize; i++) {
-          noiseData[i] = (Math.random() * 2 - 1) * Math.max(0, 1 - i / bufferSize)
+          noiseData[i] =
+            (Math.random() * 2 - 1) * Math.max(0, 1 - i / bufferSize)
         }
 
         const noiseSource = audioContext.createBufferSource()
@@ -459,7 +464,7 @@ export default function DrivingSimulation () {
 
         // Add distortion for more aggressive sound
         const distortion = audioContext.createWaveShaper()
-        function makeDistortionCurve(amount) {
+        function makeDistortionCurve (amount) {
           const k = typeof amount === 'number' ? amount : 50
           const samples = 44100
           const curve = new Float32Array(samples)
@@ -467,7 +472,7 @@ export default function DrivingSimulation () {
 
           for (let i = 0; i < samples; ++i) {
             const x = (i * 2) / samples - 1
-            curve[i] = (3 + k) * x * 20 * deg / (Math.PI + k * Math.abs(x))
+            curve[i] = ((3 + k) * x * 20 * deg) / (Math.PI + k * Math.abs(x))
           }
           return curve
         }
@@ -481,7 +486,10 @@ export default function DrivingSimulation () {
 
         // Start with fade-in
         nitroGainNode.gain.setValueAtTime(0, audioContext.currentTime)
-        nitroGainNode.gain.linearRampToValueAtTime(0.2, audioContext.currentTime + 0.1)
+        nitroGainNode.gain.linearRampToValueAtTime(
+          0.2,
+          audioContext.currentTime + 0.1
+        )
 
         // Start sound
         nitroOscillator.start()
@@ -495,11 +503,17 @@ export default function DrivingSimulation () {
     }
 
     // Stop nitro sound
-    function stopNitroSound() {
+    function stopNitroSound () {
       if (isNitroSoundPlaying) {
         // Fade out
-        nitroGainNode.gain.setValueAtTime(nitroGainNode.gain.value, audioContext.currentTime)
-        nitroGainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.2)
+        nitroGainNode.gain.setValueAtTime(
+          nitroGainNode.gain.value,
+          audioContext.currentTime
+        )
+        nitroGainNode.gain.linearRampToValueAtTime(
+          0,
+          audioContext.currentTime + 0.2
+        )
 
         // Stop after fade-out
         setTimeout(() => {
@@ -512,7 +526,7 @@ export default function DrivingSimulation () {
     }
 
     // Create exhaust particle for nitro effect
-    function createExhaustParticle() {
+    function createExhaustParticle () {
       // Get the car's position and rotation
       const carDirection = new THREE.Vector3(
         -Math.sin(playerCar.rotation.y),
@@ -522,9 +536,9 @@ export default function DrivingSimulation () {
 
       // Position particles at the back of the car
       const exhaustPosOffset = new THREE.Vector3(
-        playerCar.position.x + (carDirection.x * 1.1),
+        playerCar.position.x + carDirection.x * 1.1,
         playerCar.position.y + 0.22, // Just above the car's bottom
-        playerCar.position.z + (carDirection.z * 1.1)
+        playerCar.position.z + carDirection.z * 1.1
       )
 
       // Randomize position slightly
@@ -575,7 +589,7 @@ export default function DrivingSimulation () {
     }
 
     // Update exhaust particles
-    function updateExhaustParticles() {
+    function updateExhaustParticles () {
       // Add new particles when nitro is active
       if (nitroActive && playerSpeed > 0.05) {
         // Spawn particles at a rate based on speed
@@ -628,7 +642,7 @@ export default function DrivingSimulation () {
       s: false,
       d: false,
       space: false,
-      n: false  // Add nitro key
+      n: false // Add nitro key
     }
 
     // Player car variables
@@ -1752,21 +1766,56 @@ export default function DrivingSimulation () {
     // Disable orbit controls completely
     controls.enabled = false
 
-    // Add display elements for speed, distance, and health
-    const speedometerDiv = document.createElement('div')
-    speedometerDiv.style.position = 'absolute'
-    speedometerDiv.style.bottom = '20px'
-    speedometerDiv.style.right = '20px'
-    speedometerDiv.style.backgroundColor = 'rgba(0, 0, 0, 0.7)'
-    speedometerDiv.style.color = 'white'
-    speedometerDiv.style.padding = '10px'
-    speedometerDiv.style.borderRadius = '5px'
-    speedometerDiv.style.fontFamily = 'Arial, sans-serif'
-    speedometerDiv.style.fontSize = '16px'
-    speedometerDiv.style.zIndex = '1000'
-    speedometerDiv.innerHTML =
-      'Speed: 0 km/h<br>Distance: 0.0 km<br>Health: 100%<br>Nitro: 100%'
-    document.body.appendChild(speedometerDiv)
+    // Add display elements for speed, distance, health and nitro with game-like UI
+    const dashboardDiv = document.createElement('div')
+    dashboardDiv.style.position = 'absolute'
+    dashboardDiv.style.bottom = '20px'
+    dashboardDiv.style.left = '50%'
+    dashboardDiv.style.transform = 'translateX(-50%)'
+    dashboardDiv.style.backgroundColor = 'rgba(0, 0, 0, 0.7)'
+    dashboardDiv.style.color = 'white'
+    dashboardDiv.style.padding = '15px 25px'
+    dashboardDiv.style.borderRadius = '10px'
+    dashboardDiv.style.fontFamily = '"Orbitron", "Rajdhani", sans-serif'
+    dashboardDiv.style.fontSize = '18px'
+    dashboardDiv.style.zIndex = '1000'
+    dashboardDiv.style.display = 'flex'
+    dashboardDiv.style.gap = '25px'
+    dashboardDiv.style.boxShadow = '0 0 10px rgba(0, 150, 255, 0.7)'
+    dashboardDiv.style.border = '2px solid rgba(0, 150, 255, 0.5)'
+
+    // Create speed display
+    const speedDiv = document.createElement('div')
+    speedDiv.innerHTML =
+      '<div style="font-size:14px;color:#0af;margin-bottom:5px">SPEED</div><div id="speed-value" style="font-size:28px;font-weight:bold">0</div><div style="font-size:14px">km/h</div>'
+    dashboardDiv.appendChild(speedDiv)
+
+    // Create distance display
+    const distanceDiv = document.createElement('div')
+    distanceDiv.innerHTML =
+      '<div style="font-size:14px;color:#0af;margin-bottom:5px">DISTANCE</div><div id="distance-value" style="font-size:28px;font-weight:bold">0.0</div><div style="font-size:14px">km</div>'
+    dashboardDiv.appendChild(distanceDiv)
+
+    // Create health meter with visual bar
+    const healthDiv = document.createElement('div')
+    healthDiv.innerHTML =
+      '<div style="font-size:14px;color:#0af;margin-bottom:5px">HEALTH</div><div style="width:80px;height:20px;background:rgba(255,255,255,0.2);border-radius:10px;overflow:hidden"><div id="health-bar" style="width:100%;height:100%;background:linear-gradient(90deg,#f00,#0f0);transition:width 0.3s"></div></div><div id="health-value" style="font-size:14px;text-align:center">100%</div>'
+    dashboardDiv.appendChild(healthDiv)
+
+    // Create nitro meter with visual bar
+    const nitroDiv = document.createElement('div')
+    nitroDiv.innerHTML =
+      '<div style="font-size:14px;color:#0af;margin-bottom:5px">NITRO</div><div style="width:80px;height:20px;background:rgba(255,255,255,0.2);border-radius:10px;overflow:hidden"><div id="nitro-bar" style="width:100%;height:100%;background:linear-gradient(90deg,#00f,#0ff);transition:width 0.3s"></div></div><div id="nitro-value" style="font-size:14px;text-align:center">100%</div>'
+    dashboardDiv.appendChild(nitroDiv)
+
+    document.body.appendChild(dashboardDiv)
+
+    // Add Google Fonts for game-like typography
+    const fontLink = document.createElement('link')
+    fontLink.href =
+      'https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@500;700&display=swap'
+    fontLink.rel = 'stylesheet'
+    document.head.appendChild(fontLink)
 
     // Create damage indicator overlay
     const damageIndicator = document.createElement('div')
@@ -2221,18 +2270,19 @@ export default function DrivingSimulation () {
         totalDistanceKm += distanceThisFrame
       }
 
-      // Update speedometer display with health and nitro
-      speedometerDiv.innerHTML = `Speed: ${Math.round(
-        speedKmh
-      )} km/h<br>Distance: ${totalDistanceKm.toFixed(
-        2
-      )} km<br>Health: ${playerHealth}%<br>Nitro: ${Math.round(nitroFuel)}%`
+      // Update dashboard display with health and nitro
+      document.getElementById('speed-value').textContent = Math.round(speedKmh)
+      document.getElementById('distance-value').textContent = totalDistanceKm.toFixed(2)
+      document.getElementById('health-value').textContent = playerHealth + '%'
+      document.getElementById('health-bar').style.width = playerHealth + '%'
+      document.getElementById('nitro-value').textContent = Math.round(nitroFuel) + '%'
+      document.getElementById('nitro-bar').style.width = Math.round(nitroFuel) + '%'
 
       // Add visual indication when nitro is active
       if (nitroActive) {
-        speedometerDiv.style.boxShadow = '0 0 15px #54feff'
+        dashboardDiv.style.boxShadow = '0 0 15px #54feff'
       } else {
-        speedometerDiv.style.boxShadow = 'none'
+        dashboardDiv.style.boxShadow = '0 0 10px rgba(0, 150, 255, 0.7)'
       }
 
       // Smooth turning implementation
@@ -2642,7 +2692,7 @@ export default function DrivingSimulation () {
       window.removeEventListener('keydown', handleKeyDown)
       window.removeEventListener('keyup', handleKeyUp)
       mountRef.current.removeChild(renderer.domElement)
-      document.body.removeChild(speedometerDiv)
+      document.body.removeChild(dashboardDiv)
       document.body.removeChild(damageIndicator)
 
       // Clean up audio
