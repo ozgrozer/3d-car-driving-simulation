@@ -2272,11 +2272,24 @@ export default function DrivingSimulation () {
 
       // Update dashboard display with health and nitro
       document.getElementById('speed-value').textContent = Math.round(speedKmh)
-      document.getElementById('distance-value').textContent = totalDistanceKm.toFixed(2)
+      document.getElementById('distance-value').textContent =
+        totalDistanceKm.toFixed(2)
+
+      // Make dashboard UI smaller
+      const dashboardElements = document.querySelectorAll(
+        '.dashboard, .dashboard-item, .dashboard-value'
+      )
+      dashboardElements.forEach(element => {
+        element.style.fontSize = '12px'
+        element.style.padding = '0.2em'
+        element.style.margin = '0.1em'
+      })
       document.getElementById('health-value').textContent = playerHealth + '%'
       document.getElementById('health-bar').style.width = playerHealth + '%'
-      document.getElementById('nitro-value').textContent = Math.round(nitroFuel) + '%'
-      document.getElementById('nitro-bar').style.width = Math.round(nitroFuel) + '%'
+      document.getElementById('nitro-value').textContent =
+        Math.round(nitroFuel) + '%'
+      document.getElementById('nitro-bar').style.width =
+        Math.round(nitroFuel) + '%'
 
       // Add visual indication when nitro is active
       if (nitroActive) {
