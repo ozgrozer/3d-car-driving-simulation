@@ -187,7 +187,7 @@ export default function DrivingSimulation () {
     // Add variables for speed display and odometer
     let speedKmh = 0
     let totalDistanceKm = 0
-    const speedConversionFactor = 100 // Convert in-game speed to km/h
+    const speedConversionFactor = 200 // Changed from 100 to 200 to double the displayed speed
     let lastTime = 0
 
     // Event listeners for keyboard controls
