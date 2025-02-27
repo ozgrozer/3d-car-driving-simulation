@@ -977,8 +977,8 @@ export default function DrivingSimulation () {
 
       // Update camera to follow car - improved version
       // Set camera directly behind car at fixed distance - more reliable approach
-      const cameraDistance = 15 // Increased for better visibility
-      const cameraHeight = 6 // Slightly higher for better view
+      const cameraDistance = 8 // Reduced from 15 for closer view
+      const cameraHeight = 4 // Reduced from 6 for closer view
 
       // Calculate position directly rather than using lerp
       camera.position.set(
