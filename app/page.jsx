@@ -422,9 +422,9 @@ export default function DrivingSimulation () {
               })
               hornSound = null
             }
-          }, 100)
+          }, 50)
         }
-      }, 250) // Horn plays for only 250ms plus 100ms fade (much shorter)
+      }, 500) // Horn plays for only 250ms plus 100ms fade (much shorter)
     }
 
     // Play nitro sound
