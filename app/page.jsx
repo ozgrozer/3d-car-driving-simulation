@@ -108,7 +108,7 @@ export default function DrivingSimulation () {
     const citySize = gridSize * (blockSize + streetWidth)
 
     // Create buildings
-    function createBuilding (x, z, width, depth, height) {
+    function createBuilding(x, z, width, depth, height) {
       const buildingGeometry = new THREE.BoxGeometry(width, height, depth)
       const buildingMaterial = new THREE.MeshStandardMaterial({
         color: Math.random() * 0xffffff,
@@ -191,7 +191,7 @@ export default function DrivingSimulation () {
       }
     }
 
-    // Create city blocks
+    // Create city blocks with buildings
     for (let i = 0; i < gridSize; i++) {
       for (let j = 0; j < gridSize; j++) {
         const blockX =
@@ -199,53 +199,45 @@ export default function DrivingSimulation () {
         const blockZ =
           j * (blockSize + streetWidth) - citySize / 2 + blockSize / 2
 
-        // Create 1-4 buildings per block
-        const buildingsPerBlock = Math.floor(Math.random() * 4) + 1
+        // Create 1-2 buildings per block (reduced from 1-3 to have larger buildings)
+        const buildingsPerBlock = Math.floor(Math.random() * 2) + 1
 
-        // Increase safety margin to ensure buildings don't overflow onto roads
-        const safetyMargin = 3
+        // Increase safety margin to prevent buildings from overflowing onto roads
+        const safetyMargin = 4
         const maxBuildingWidth = blockSize - safetyMargin * 2
         const maxBuildingDepth = blockSize - safetyMargin * 2
 
         if (buildingsPerBlock === 1) {
-          // One large building - now with stricter size limits
+          // One large building with strict size limits
           const height = 10 + Math.random() * 40
-          // Ensure building size stays well within block boundaries
-          const buildingWidth = Math.min(blockSize * 0.7, maxBuildingWidth)
-          const buildingDepth = Math.min(blockSize * 0.7, maxBuildingDepth)
 
-          // Verify the building won't overlap with roads
-          const halfWidth = buildingWidth / 2
-          const halfDepth = buildingDepth / 2
-          const blockLeftEdge = blockX - blockSize / 2
-          const blockRightEdge = blockX + blockSize / 2
-          const blockTopEdge = blockZ - blockSize / 2
-          const blockBottomEdge = blockZ + blockSize / 2
+          // Ensure building size is much larger - at least 75% of available space
+          // Minimum size is now 75% of max width/depth to ensure thick buildings
+          const minSize = maxBuildingWidth * 0.75
+          const buildingWidth = Math.max(
+            Math.min(blockSize * 0.85, maxBuildingWidth),
+            minSize
+          )
+          const buildingDepth = Math.max(
+            Math.min(blockSize * 0.85, maxBuildingDepth),
+            minSize
+          )
 
-          // Ensure building stays within block boundaries
-          if (blockLeftEdge + halfWidth + safetyMargin <= blockX &&
-              blockX + halfWidth + safetyMargin <= blockRightEdge &&
-              blockTopEdge + halfDepth + safetyMargin <= blockZ &&
-              blockZ + halfDepth + safetyMargin <= blockBottomEdge) {
-            createBuilding(
-              blockX,
-              blockZ,
-              buildingWidth,
-              buildingDepth,
-              height
-            )
-          }
+          createBuilding(
+            blockX,
+            blockZ,
+            buildingWidth,
+            buildingDepth,
+            height
+          )
         } else {
-          // Multiple smaller buildings
-          // Use a smaller portion of the block to ensure spacing between buildings
-          const subBlockSize = Math.min(blockSize / Math.sqrt(buildingsPerBlock + 1), maxBuildingWidth * 0.8)
+          // Two buildings with proper spacing
+          // Make subBlockSize larger by using a smaller divisor
+          const subBlockSize = Math.min(blockSize / 1.8, maxBuildingWidth * 0.8)
 
           for (let k = 0; k < buildingsPerBlock; k++) {
-            // Calculate maximum allowed offset with enhanced safety
-            const maxOffset = Math.min(
-              (blockSize - safetyMargin * 2 - subBlockSize) / 2,
-              blockSize / 4
-            )
+            // Calculate maximum allowed offset with reduced distance between buildings
+            const maxOffset = (blockSize - safetyMargin * 2 - subBlockSize) / 2.5
 
             // Limit the offset to stay well within boundaries
             const offsetX = (Math.random() - 0.5) * maxOffset * 2
@@ -253,26 +245,26 @@ export default function DrivingSimulation () {
 
             const height = 5 + Math.random() * 25
 
-            // More conservative width and depth calculations
-            const maxWidth = Math.min(subBlockSize * 0.8, (maxBuildingWidth - Math.abs(offsetX) * 2) * 0.8)
-            const maxDepth = Math.min(subBlockSize * 0.8, (maxBuildingDepth - Math.abs(offsetZ) * 2) * 0.8)
+            // Much larger minimum building size - at least 75% of allocated space
+            const minDimension = subBlockSize * 0.75
 
-            const width = maxWidth * (0.6 + Math.random() * 0.3)
-            const depth = maxDepth * (0.6 + Math.random() * 0.3)
+            // Narrower range for random sizing to keep buildings more consistent
+            const width = Math.max(subBlockSize * (0.75 + Math.random() * 0.2), minDimension)
+            const depth = Math.max(subBlockSize * (0.75 + Math.random() * 0.2), minDimension)
 
-            // Calculate building edges
+            // Verify building won't overflow
             const buildingLeft = blockX + offsetX - width / 2
             const buildingRight = blockX + offsetX + width / 2
             const buildingTop = blockZ + offsetZ - depth / 2
             const buildingBottom = blockZ + offsetZ + depth / 2
 
-            // Calculate block boundaries
+            // Calculate block boundaries with safety margin
             const blockLeft = blockX - blockSize / 2 + safetyMargin
             const blockRight = blockX + blockSize / 2 - safetyMargin
             const blockTop = blockZ - blockSize / 2 + safetyMargin
             const blockBottom = blockZ + blockSize / 2 - safetyMargin
 
-            // Only create the building if it stays completely within the safe block area
+            // Only create building if it stays completely within the safe block area
             if (buildingLeft >= blockLeft &&
                 buildingRight <= blockRight &&
                 buildingTop >= blockTop &&
@@ -296,6 +288,14 @@ export default function DrivingSimulation () {
       roughness: 0.9
     })
 
+    // Road line material - simplified to only white
+    const roadLineMaterial = new THREE.MeshStandardMaterial({
+      color: 0xffffff,
+      roughness: 0.9,
+      emissive: 0xffffff,
+      emissiveIntensity: 0.2
+    });
+
     // Horizontal roads
     for (let i = 0; i <= gridSize; i++) {
       const roadX =
@@ -306,6 +306,34 @@ export default function DrivingSimulation () {
       road.position.set(roadX + streetWidth / 2, 0.01, 0)
       road.receiveShadow = true
       scene.add(road)
+
+      // Add white edge lines
+      const leftEdgeGeometry = new THREE.PlaneGeometry(0.2, citySize);
+      const leftEdge = new THREE.Mesh(leftEdgeGeometry, roadLineMaterial);
+      leftEdge.rotation.x = -Math.PI / 2;
+      leftEdge.position.set(roadX + 0.5, 0.02, 0);
+      scene.add(leftEdge);
+
+      const rightEdgeGeometry = new THREE.PlaneGeometry(0.2, citySize);
+      const rightEdge = new THREE.Mesh(rightEdgeGeometry, roadLineMaterial);
+      rightEdge.rotation.x = -Math.PI / 2;
+      rightEdge.position.set(roadX + streetWidth - 0.5, 0.02, 0);
+      scene.add(rightEdge);
+
+      // Simplified center dashed line
+      for (let dash = 0; dash < citySize; dash += 8) {
+        if (dash % 16 < 8) { // Creates a dashed pattern
+          const dashGeometry = new THREE.PlaneGeometry(0.4, 4);
+          const dashLine = new THREE.Mesh(dashGeometry, roadLineMaterial);
+          dashLine.rotation.x = -Math.PI / 2;
+          dashLine.position.set(
+            roadX + streetWidth / 2,
+            0.02,
+            dash - citySize / 2 + 2
+          );
+          scene.add(dashLine);
+        }
+      }
     }
 
     // Vertical roads
@@ -318,6 +346,34 @@ export default function DrivingSimulation () {
       road.position.set(0, 0.01, roadZ + streetWidth / 2)
       road.receiveShadow = true
       scene.add(road)
+
+      // Add white edge lines
+      const topEdgeGeometry = new THREE.PlaneGeometry(citySize, 0.2);
+      const topEdge = new THREE.Mesh(topEdgeGeometry, roadLineMaterial);
+      topEdge.rotation.x = -Math.PI / 2;
+      topEdge.position.set(0, 0.02, roadZ + 0.5);
+      scene.add(topEdge);
+
+      const bottomEdgeGeometry = new THREE.PlaneGeometry(citySize, 0.2);
+      const bottomEdge = new THREE.Mesh(bottomEdgeGeometry, roadLineMaterial);
+      bottomEdge.rotation.x = -Math.PI / 2;
+      bottomEdge.position.set(0, 0.02, roadZ + streetWidth - 0.5);
+      scene.add(bottomEdge);
+
+      // Simplified center dashed line
+      for (let dash = 0; dash < citySize; dash += 8) {
+        if (dash % 16 < 8) { // Creates a dashed pattern
+          const dashGeometry = new THREE.PlaneGeometry(4, 0.4);
+          const dashLine = new THREE.Mesh(dashGeometry, roadLineMaterial);
+          dashLine.rotation.x = -Math.PI / 2;
+          dashLine.position.set(
+            dash - citySize / 2 + 2,
+            0.02,
+            roadZ + streetWidth / 2
+          );
+          scene.add(dashLine);
+        }
+      }
     }
 
     // Create cars
