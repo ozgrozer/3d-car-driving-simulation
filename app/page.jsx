@@ -2234,6 +2234,21 @@ export default function DrivingSimulation () {
           }
         }
 
+        // Apply handbrake if space is pressed
+        if (keyState.space) {
+          // Apply strong braking force regardless of direction
+          if (playerSpeed > 0) {
+            playerSpeed = Math.max(playerSpeed - brakeStrength, 0)
+          } else if (playerSpeed < 0) {
+            playerSpeed = Math.min(playerSpeed + brakeStrength, 0)
+          }
+          // Also add sliding/drift effect by increasing turn rate sensitivity
+          const driftFactor = 1.5
+          if (keyState.a || keyState.d) {
+            currentTurnRate *= driftFactor
+          }
+        }
+
         // If nitro was active but ran out of fuel, deactivate it
         if (nitroActive && nitroFuel <= 0) {
           nitroActive = false
