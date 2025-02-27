@@ -673,6 +673,7 @@ export default function DrivingSimulation () {
     let nitroRecoveryTime = 0
     let nitroBoostMultiplier = 2.0
     let exhaustParticles = []
+    let nitroAccelerationFactor = 1.0
 
     // Event listeners for keyboard controls
     const handleKeyDown = e => {
@@ -2268,6 +2269,18 @@ export default function DrivingSimulation () {
           (deltaTime / 1000) *
           (speedConversionFactor / 3600)
         totalDistanceKm += distanceThisFrame
+      }
+
+      // Progressive nitro acceleration
+      if (nitroActive && nitroFuel > 0) {
+        // Increase acceleration factor over time while nitro is active
+        nitroAccelerationFactor = Math.min(nitroAccelerationFactor + 0.05, 3.0)
+        // Apply the progressive acceleration
+        const nitroBoost = 0.02 * nitroAccelerationFactor
+        playerSpeed += playerSpeed > 0 ? nitroBoost : -nitroBoost
+      } else {
+        // Reset acceleration factor when nitro is not active
+        nitroAccelerationFactor = 1.0
       }
 
       // Update dashboard display with health and nitro
