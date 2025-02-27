@@ -593,55 +593,55 @@ export default function DrivingSimulation () {
     function createCar (x, z, direction) {
       const carGroup = new THREE.Group()
 
-      // Car body - reduced dimensions by ~30%
-      const bodyGeometry = new THREE.BoxGeometry(1.4, 0.7, 2.8)
+      // Car body - reduced dimensions by ~25%
+      const bodyGeometry = new THREE.BoxGeometry(1.1, 0.55, 2.1)
       const bodyMaterial = new THREE.MeshStandardMaterial({
         color: Math.random() * 0xffffff,
         roughness: 0.5,
         metalness: 0.7
       })
       const body = new THREE.Mesh(bodyGeometry, bodyMaterial)
-      body.position.y = 0.35 // Lowered to match new height
+      body.position.y = 0.28 // Lowered to match new height
       carGroup.add(body)
 
       // Car top - reduced dimensions
-      const topGeometry = new THREE.BoxGeometry(1.3, 0.6, 1.4)
+      const topGeometry = new THREE.BoxGeometry(1.0, 0.5, 1.0)
       const topMaterial = new THREE.MeshStandardMaterial({
         color: bodyMaterial.color,
         roughness: 0.5,
         metalness: 0.7
       })
       const top = new THREE.Mesh(topGeometry, topMaterial)
-      top.position.set(0, 1.0, -0.4) // Adjusted position
+      top.position.set(0, 0.8, -0.3) // Adjusted position
       carGroup.add(top)
 
       // Wheels - reduced size
-      const wheelGeometry = new THREE.CylinderGeometry(0.35, 0.35, 0.3, 16)
+      const wheelGeometry = new THREE.CylinderGeometry(0.25, 0.25, 0.2, 16)
       const wheelMaterial = new THREE.MeshStandardMaterial({ color: 0x111111 })
 
       // Adjusted wheel positions
       const wheel1 = new THREE.Mesh(wheelGeometry, wheelMaterial)
-      wheel1.position.set(0.8, 0.35, 0.8)
+      wheel1.position.set(0.6, 0.25, 0.6)
       wheel1.rotation.z = Math.PI / 2
       carGroup.add(wheel1)
 
       const wheel2 = new THREE.Mesh(wheelGeometry, wheelMaterial)
-      wheel2.position.set(-0.8, 0.35, 0.8)
+      wheel2.position.set(-0.6, 0.25, 0.6)
       wheel2.rotation.z = Math.PI / 2
       carGroup.add(wheel2)
 
       const wheel3 = new THREE.Mesh(wheelGeometry, wheelMaterial)
-      wheel3.position.set(0.8, 0.35, -0.8)
+      wheel3.position.set(0.6, 0.25, -0.6)
       wheel3.rotation.z = Math.PI / 2
       carGroup.add(wheel3)
 
       const wheel4 = new THREE.Mesh(wheelGeometry, wheelMaterial)
-      wheel4.position.set(-0.8, 0.35, -0.8)
+      wheel4.position.set(-0.6, 0.25, -0.6)
       wheel4.rotation.z = Math.PI / 2
       carGroup.add(wheel4)
 
       // Headlights - scaled down
-      const headlightGeometry = new THREE.SphereGeometry(0.15, 16, 16)
+      const headlightGeometry = new THREE.SphereGeometry(0.1, 16, 16)
       const headlightMaterial = new THREE.MeshStandardMaterial({
         color: 0xffffcc,
         emissive: 0xffffcc,
@@ -649,11 +649,11 @@ export default function DrivingSimulation () {
       })
 
       const headlight1 = new THREE.Mesh(headlightGeometry, headlightMaterial)
-      headlight1.position.set(0.5, 0.35, 1.4)
+      headlight1.position.set(0.4, 0.25, 1.05)
       carGroup.add(headlight1)
 
       const headlight2 = new THREE.Mesh(headlightGeometry, headlightMaterial)
-      headlight2.position.set(-0.5, 0.35, 1.4)
+      headlight2.position.set(-0.4, 0.25, 1.05)
       carGroup.add(headlight2)
 
       // Taillights - scaled down
@@ -664,11 +664,11 @@ export default function DrivingSimulation () {
       })
 
       const taillight1 = new THREE.Mesh(headlightGeometry, taillightMaterial)
-      taillight1.position.set(0.5, 0.35, -1.4)
+      taillight1.position.set(0.4, 0.25, -1.05)
       carGroup.add(taillight1)
 
       const taillight2 = new THREE.Mesh(headlightGeometry, taillightMaterial)
-      taillight2.position.set(-0.5, 0.35, -1.4)
+      taillight2.position.set(-0.4, 0.25, -1.05)
       carGroup.add(taillight2)
 
       carGroup.position.set(x, 0, z)
@@ -824,53 +824,53 @@ export default function DrivingSimulation () {
       const carGroup = new THREE.Group()
 
       // Car body - reduced but still slightly larger than regular cars
-      const bodyGeometry = new THREE.BoxGeometry(1.6, 0.8, 3.2)
+      const bodyGeometry = new THREE.BoxGeometry(1.3, 0.65, 2.4)
       const bodyMaterial = new THREE.MeshStandardMaterial({
         color: 0xff0000, // Red car for player
         roughness: 0.3,
         metalness: 0.8
       })
       const body = new THREE.Mesh(bodyGeometry, bodyMaterial)
-      body.position.y = 0.4
+      body.position.y = 0.32
       carGroup.add(body)
 
       // Car top
-      const topGeometry = new THREE.BoxGeometry(1.4, 0.6, 1.5)
+      const topGeometry = new THREE.BoxGeometry(1.1, 0.5, 1.1)
       const topMaterial = new THREE.MeshStandardMaterial({
         color: 0xff2200,
         roughness: 0.3,
         metalness: 0.8
       })
       const top = new THREE.Mesh(topGeometry, topMaterial)
-      top.position.set(0, 1.1, -0.2)
+      top.position.set(0, 0.9, -0.2)
       carGroup.add(top)
 
       // Wheels
-      const wheelGeometry = new THREE.CylinderGeometry(0.35, 0.35, 0.3, 16)
+      const wheelGeometry = new THREE.CylinderGeometry(0.28, 0.28, 0.25, 16)
       const wheelMaterial = new THREE.MeshStandardMaterial({ color: 0x111111 })
 
       const wheel1 = new THREE.Mesh(wheelGeometry, wheelMaterial)
-      wheel1.position.set(0.9, 0.4, 1.0)
+      wheel1.position.set(0.7, 0.3, 0.8)
       wheel1.rotation.z = Math.PI / 2
       carGroup.add(wheel1)
 
       const wheel2 = new THREE.Mesh(wheelGeometry, wheelMaterial)
-      wheel2.position.set(-0.9, 0.4, 1.0)
+      wheel2.position.set(-0.7, 0.3, 0.8)
       wheel2.rotation.z = Math.PI / 2
       carGroup.add(wheel2)
 
       const wheel3 = new THREE.Mesh(wheelGeometry, wheelMaterial)
-      wheel3.position.set(0.9, 0.4, -1.0)
+      wheel3.position.set(0.7, 0.3, -0.8)
       wheel3.rotation.z = Math.PI / 2
       carGroup.add(wheel3)
 
       const wheel4 = new THREE.Mesh(wheelGeometry, wheelMaterial)
-      wheel4.position.set(-0.9, 0.4, -1.0)
+      wheel4.position.set(-0.7, 0.3, -0.8)
       wheel4.rotation.z = Math.PI / 2
       carGroup.add(wheel4)
 
       // Headlights
-      const headlightGeometry = new THREE.SphereGeometry(0.18, 16, 16)
+      const headlightGeometry = new THREE.SphereGeometry(0.14, 16, 16)
       const headlightMaterial = new THREE.MeshStandardMaterial({
         color: 0xffffcc,
         emissive: 0xffffcc,
@@ -878,11 +878,11 @@ export default function DrivingSimulation () {
       })
 
       const headlight1 = new THREE.Mesh(headlightGeometry, headlightMaterial)
-      headlight1.position.set(0.6, 0.4, 1.6)
+      headlight1.position.set(0.5, 0.3, 1.2)
       carGroup.add(headlight1)
 
       const headlight2 = new THREE.Mesh(headlightGeometry, headlightMaterial)
-      headlight2.position.set(-0.6, 0.4, 1.6)
+      headlight2.position.set(-0.5, 0.3, 1.2)
       carGroup.add(headlight2)
 
       // Taillights
@@ -893,11 +893,11 @@ export default function DrivingSimulation () {
       })
 
       const taillight1 = new THREE.Mesh(headlightGeometry, taillightMaterial)
-      taillight1.position.set(0.6, 0.4, -1.6)
+      taillight1.position.set(0.5, 0.3, -1.2)
       carGroup.add(taillight1)
 
       const taillight2 = new THREE.Mesh(headlightGeometry, taillightMaterial)
-      taillight2.position.set(-0.6, 0.4, -1.6)
+      taillight2.position.set(-0.5, 0.3, -1.2)
       carGroup.add(taillight2)
 
       // Place the car on a road
