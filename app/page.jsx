@@ -39,6 +39,11 @@ export default function DrivingSimulation () {
     const deceleration = 0.005
     const brakeStrength = 0.03
     const turnSpeed = 0.03
+    // Add variables for speed display and odometer
+    let speedKmh = 0
+    let totalDistanceKm = 0
+    const speedConversionFactor = 100 // Convert in-game speed to km/h
+    let lastTime = 0
 
     // Event listeners for keyboard controls
     const handleKeyDown = e => {
@@ -726,8 +731,27 @@ export default function DrivingSimulation () {
     // Disable orbit controls completely
     controls.enabled = false
 
+    // Add display elements for speed and distance
+    const speedometerDiv = document.createElement('div')
+    speedometerDiv.style.position = 'absolute'
+    speedometerDiv.style.bottom = '20px'
+    speedometerDiv.style.right = '20px'
+    speedometerDiv.style.backgroundColor = 'rgba(0, 0, 0, 0.7)'
+    speedometerDiv.style.color = 'white'
+    speedometerDiv.style.padding = '10px'
+    speedometerDiv.style.borderRadius = '5px'
+    speedometerDiv.style.fontFamily = 'Arial, sans-serif'
+    speedometerDiv.style.fontSize = '16px'
+    speedometerDiv.style.zIndex = '1000'
+    speedometerDiv.innerHTML = 'Speed: 0 km/h<br>Distance: 0.0 km'
+    document.body.appendChild(speedometerDiv)
+
     // Animation loop
     function animate () {
+      const currentTime = performance.now()
+      const deltaTime = currentTime - lastTime
+      lastTime = currentTime
+
       window.requestAnimationFrame(animate)
 
       // Handle player car controls
@@ -754,6 +778,19 @@ export default function DrivingSimulation () {
           playerSpeed = Math.min(playerSpeed + brakeStrength, 0)
         }
       }
+
+      // Calculate speed in km/h and distance
+      speedKmh = Math.abs(playerSpeed * speedConversionFactor)
+
+      // Calculate distance traveled in this frame (in km)
+      // Only add distance when moving
+      if (playerSpeed !== 0) {
+        const distanceThisFrame = Math.abs(playerSpeed) * (deltaTime / 1000) * (speedConversionFactor / 3600)
+        totalDistanceKm += distanceThisFrame
+      }
+
+      // Update speedometer display
+      speedometerDiv.innerHTML = `Speed: ${Math.round(speedKmh)} km/h<br>Distance: ${totalDistanceKm.toFixed(2)} km`
 
       // Turning
       if (keyState.a) {
@@ -1075,6 +1112,7 @@ export default function DrivingSimulation () {
       window.removeEventListener('keydown', handleKeyDown)
       window.removeEventListener('keyup', handleKeyUp)
       mountRef.current.removeChild(renderer.domElement)
+      document.body.removeChild(speedometerDiv)
     }
   }, []) // Empty dependency array ensures this runs once on mount
 
