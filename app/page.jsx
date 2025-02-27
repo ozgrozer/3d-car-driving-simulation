@@ -251,7 +251,7 @@ export default function DrivingSimulation () {
     scene.add(directionalLight)
 
     // Ground
-    const groundGeometry = new THREE.PlaneGeometry(200, 200)
+    const groundGeometry = new THREE.PlaneGeometry(300, 300)
     const groundMaterial = new THREE.MeshStandardMaterial({
       color: 0x1a5e1a,
       roughness: 0.8
@@ -262,7 +262,7 @@ export default function DrivingSimulation () {
     scene.add(ground)
 
     // City grid
-    const gridSize = 5
+    const gridSize = 8
     const blockSize = 20
     const streetWidth = 10
     const citySize = gridSize * (blockSize + streetWidth)
@@ -645,7 +645,7 @@ export default function DrivingSimulation () {
     }
 
     // Add cars to roads
-    for (let i = 0; i < 20; i++) {
+    for (let i = 0; i < 30; i++) {
       let x, z, direction, movingDirection
 
       if (Math.random() > 0.5) {
@@ -744,7 +744,7 @@ export default function DrivingSimulation () {
     }
 
     // Add people to sidewalks
-    for (let i = 0; i < 30; i++) {
+    for (let i = 0; i < 50; i++) {
       let x, z
 
       // Position people along sidewalks
@@ -965,8 +965,8 @@ export default function DrivingSimulation () {
         playerCar.position.z += Math.cos(playerCar.rotation.y) * playerSpeed
       }
 
-      // Keep player within bounds
-      const groundHalfSize = 100 // Half of 200 (ground plane size)
+      // Keep player within bounds - updated for larger ground
+      const groundHalfSize = 150  // Half of 300 (new ground plane size)
       playerCar.position.x = Math.max(
         Math.min(playerCar.position.x, groundHalfSize),
         -groundHalfSize
