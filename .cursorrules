@@ -1,3 +1,5 @@
-this is a next.js app
+this is a next.js and three.js app
+and this is 3d first person view car playing game
 use pnpm instead of npm
 use tailwind css for styling
+don't try to run the app with "pnpm dev"
