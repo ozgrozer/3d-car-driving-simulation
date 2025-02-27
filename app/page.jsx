@@ -892,41 +892,49 @@ export default function DrivingSimulation () {
 
     // Add people to sidewalks
     for (let i = 0; i < 100; i++) {
-      let x, z;
-      let sidewalkOrientation; // Track if person is on horizontal or vertical sidewalk
+      let x, z
+      let sidewalkOrientation // Track if person is on horizontal or vertical sidewalk
 
       // Position people along sidewalks
       if (Math.random() > 0.5) {
         // Horizontal sidewalk
-        sidewalkOrientation = 'horizontal';
-        const roadIndex = Math.floor(Math.random() * (gridSize + 1));
-        z = roadIndex * (blockSize + streetWidth) - citySize / 2 - streetWidth / 2 + streetWidth / 2;
+        sidewalkOrientation = 'horizontal'
+        const roadIndex = Math.floor(Math.random() * (gridSize + 1))
+        z =
+          roadIndex * (blockSize + streetWidth) -
+          citySize / 2 -
+          streetWidth / 2 +
+          streetWidth / 2
         // Position strictly on the pavement area
-        z += Math.random() > 0.5 ? streetWidth * 0.4 : -streetWidth * 0.4;
-        x = (Math.random() - 0.5) * citySize;
+        z += Math.random() > 0.5 ? streetWidth * 0.4 : -streetWidth * 0.4
+        x = (Math.random() - 0.5) * citySize
         // Set initial direction along the sidewalk
-        const direction = Math.random() > 0.5 ? 0 : Math.PI;
+        const direction = Math.random() > 0.5 ? 0 : Math.PI
       } else {
         // Vertical sidewalk
-        sidewalkOrientation = 'vertical';
-        const roadIndex = Math.floor(Math.random() * (gridSize + 1));
-        x = roadIndex * (blockSize + streetWidth) - citySize / 2 - streetWidth / 2 + streetWidth / 2;
+        sidewalkOrientation = 'vertical'
+        const roadIndex = Math.floor(Math.random() * (gridSize + 1))
+        x =
+          roadIndex * (blockSize + streetWidth) -
+          citySize / 2 -
+          streetWidth / 2 +
+          streetWidth / 2
         // Position strictly on the pavement area
-        x += Math.random() > 0.5 ? streetWidth * 0.4 : -streetWidth * 0.4;
-        z = (Math.random() - 0.5) * citySize;
+        x += Math.random() > 0.5 ? streetWidth * 0.4 : -streetWidth * 0.4
+        z = (Math.random() - 0.5) * citySize
         // Set initial direction along the sidewalk
-        const direction = Math.random() > 0.5 ? Math.PI/2 : -Math.PI/2;
+        const direction = Math.random() > 0.5 ? Math.PI / 2 : -Math.PI / 2
       }
 
-      const person = createPerson(x, z);
+      const person = createPerson(x, z)
       // Set direction based on orientation
       if (sidewalkOrientation === 'horizontal') {
-        person.direction = Math.random() > 0.5 ? 0 : Math.PI; // East or West
+        person.direction = Math.random() > 0.5 ? 0 : Math.PI // East or West
       } else {
-        person.direction = Math.random() > 0.5 ? Math.PI/2 : -Math.PI/2; // North or South
+        person.direction = Math.random() > 0.5 ? Math.PI / 2 : -Math.PI / 2 // North or South
       }
-      person.sidewalkOrientation = sidewalkOrientation;
-      people.push(person);
+      person.sidewalkOrientation = sidewalkOrientation
+      people.push(person)
     }
 
     // Create player car - also reduced in size but kept slightly larger than AI cars
@@ -1249,10 +1257,10 @@ export default function DrivingSimulation () {
             }
           }
 
-          // Check if car reached the edge of the city
+          // Modified logic for cars reaching edge of city - always force a turn
           if (
-            (car.speed > 0 && car.mesh.position.x > citySize / 2) ||
-            (car.speed < 0 && car.mesh.position.x < -citySize / 2)
+            (car.speed > 0 && car.mesh.position.x > citySize / 2 - 2) ||
+            (car.speed < 0 && car.mesh.position.x < -citySize / 2 + 2)
           ) {
             // Find the nearest road intersection
             const nearestRoadIndex = Math.round(
@@ -1264,21 +1272,20 @@ export default function DrivingSimulation () {
               streetWidth / 2 +
               streetWidth / 2
 
-            // Randomly choose to turn left or right
-            const turnDirection = Math.random() > 0.5 ? 1 : -1
-
-            // Position the car at the intersection
+            // Position the car at the edge (but still visible)
             if (car.speed > 0) {
               car.mesh.position.x = citySize / 2 - 2
             } else {
               car.mesh.position.x = -citySize / 2 + 2
             }
 
-            // Adjust to the nearest road
+            // Ensure we're on a valid road
             car.mesh.position.z = nearestRoadZ
 
-            // Update direction and rotation
+            // Update direction and rotation - always turn (no random)
             car.direction = 'vertical'
+            // Randomly choose turn direction
+            const turnDirection = Math.random() > 0.5 ? 1 : -1
             car.speed = Math.abs(car.speed) * turnDirection
 
             // Set proper rotation based on new direction
@@ -1356,10 +1363,10 @@ export default function DrivingSimulation () {
             }
           }
 
-          // Check if car reached the edge of the city
+          // Modified logic for cars reaching edge of city - always force a turn
           if (
-            (car.speed > 0 && car.mesh.position.z > citySize / 2) ||
-            (car.speed < 0 && car.mesh.position.z < -citySize / 2)
+            (car.speed > 0 && car.mesh.position.z > citySize / 2 - 2) ||
+            (car.speed < 0 && car.mesh.position.z < -citySize / 2 + 2)
           ) {
             // Find the nearest road intersection
             const nearestRoadIndex = Math.round(
@@ -1371,21 +1378,20 @@ export default function DrivingSimulation () {
               streetWidth / 2 +
               streetWidth / 2
 
-            // Randomly choose to turn left or right
-            const turnDirection = Math.random() > 0.5 ? 1 : -1
-
-            // Position the car at the intersection
+            // Position the car at the edge (but still visible)
             if (car.speed > 0) {
               car.mesh.position.z = citySize / 2 - 2
             } else {
               car.mesh.position.z = -citySize / 2 + 2
             }
 
-            // Adjust to the nearest road
+            // Ensure we're on a valid road
             car.mesh.position.x = nearestRoadX
 
-            // Update direction and rotation
+            // Update direction and rotation - always turn (no random)
             car.direction = 'horizontal'
+            // Randomly choose left or right turn
+            const turnDirection = Math.random() > 0.5 ? 1 : -1
             car.speed = Math.abs(car.speed) * turnDirection
 
             // Set proper rotation based on new direction
@@ -1405,55 +1411,67 @@ export default function DrivingSimulation () {
 
       // Update people positions
       people.forEach(person => {
-        person.walkCycle += 0.1;
+        person.walkCycle += 0.1
 
         // Simple walking animation
-        const leg1 = person.mesh.children[2];
-        const leg2 = person.mesh.children[3];
-        leg1.rotation.x = Math.sin(person.walkCycle) * 0.5;
-        leg2.rotation.x = Math.sin(person.walkCycle + Math.PI) * 0.5;
+        const leg1 = person.mesh.children[2]
+        const leg2 = person.mesh.children[3]
+        leg1.rotation.x = Math.sin(person.walkCycle) * 0.5
+        leg2.rotation.x = Math.sin(person.walkCycle + Math.PI) * 0.5
 
         // Store previous position to check if we need to find a new sidewalk
-        const prevX = person.mesh.position.x;
-        const prevZ = person.mesh.position.z;
+        const prevX = person.mesh.position.x
+        const prevZ = person.mesh.position.z
 
         // Move person along sidewalk
         if (person.sidewalkOrientation === 'horizontal') {
           // Only move in x direction on horizontal sidewalks
-          person.mesh.position.x += Math.cos(person.direction) * person.speed;
+          person.mesh.position.x += Math.cos(person.direction) * person.speed
         } else {
           // Only move in z direction on vertical sidewalks
-          person.mesh.position.z += Math.sin(person.direction) * person.speed;
+          person.mesh.position.z += Math.sin(person.direction) * person.speed
         }
 
         // Check if person has reached an intersection
-        const nearestHorizontalRoad = Math.round((person.mesh.position.z + citySize / 2) / (blockSize + streetWidth)) *
-          (blockSize + streetWidth) - citySize / 2 - streetWidth / 2 + streetWidth / 2;
+        const nearestHorizontalRoad =
+          Math.round(
+            (person.mesh.position.z + citySize / 2) / (blockSize + streetWidth)
+          ) *
+            (blockSize + streetWidth) -
+          citySize / 2 -
+          streetWidth / 2 +
+          streetWidth / 2
 
-        const nearestVerticalRoad = Math.round((person.mesh.position.x + citySize / 2) / (blockSize + streetWidth)) *
-          (blockSize + streetWidth) - citySize / 2 - streetWidth / 2 + streetWidth / 2;
+        const nearestVerticalRoad =
+          Math.round(
+            (person.mesh.position.x + citySize / 2) / (blockSize + streetWidth)
+          ) *
+            (blockSize + streetWidth) -
+          citySize / 2 -
+          streetWidth / 2 +
+          streetWidth / 2
 
-        const atIntersection = (
+        const atIntersection =
           Math.abs(person.mesh.position.z - nearestHorizontalRoad) < 1 &&
           Math.abs(person.mesh.position.x - nearestVerticalRoad) < 1
-        );
 
         // At city edges, reverse direction
         if (person.sidewalkOrientation === 'horizontal') {
           if (person.mesh.position.x > citySize / 2 - 1) {
-            person.direction = Math.PI; // West
-            person.mesh.position.x = citySize / 2 - 1;
+            person.direction = Math.PI // West
+            person.mesh.position.x = citySize / 2 - 1
           } else if (person.mesh.position.x < -citySize / 2 + 1) {
-            person.direction = 0; // East
-            person.mesh.position.x = -citySize / 2 + 1;
+            person.direction = 0 // East
+            person.mesh.position.x = -citySize / 2 + 1
           }
-        } else { // vertical sidewalk
+        } else {
+          // vertical sidewalk
           if (person.mesh.position.z > citySize / 2 - 1) {
-            person.direction = -Math.PI/2; // North
-            person.mesh.position.z = citySize / 2 - 1;
+            person.direction = -Math.PI / 2 // North
+            person.mesh.position.z = citySize / 2 - 1
           } else if (person.mesh.position.z < -citySize / 2 + 1) {
-            person.direction = Math.PI/2; // South
-            person.mesh.position.z = -citySize / 2 + 1;
+            person.direction = Math.PI / 2 // South
+            person.mesh.position.z = -citySize / 2 + 1
           }
         }
 
@@ -1462,24 +1480,28 @@ export default function DrivingSimulation () {
           // Determine which sidewalk to move to
           if (person.sidewalkOrientation === 'horizontal') {
             // Switch to vertical sidewalk
-            person.sidewalkOrientation = 'vertical';
+            person.sidewalkOrientation = 'vertical'
             // Ensure we're aligned with the vertical sidewalk
-            person.mesh.position.x = nearestVerticalRoad + (Math.random() > 0.5 ? streetWidth * 0.4 : -streetWidth * 0.4);
+            person.mesh.position.x =
+              nearestVerticalRoad +
+              (Math.random() > 0.5 ? streetWidth * 0.4 : -streetWidth * 0.4)
             // Choose North or South
-            person.direction = Math.random() > 0.5 ? Math.PI/2 : -Math.PI/2;
+            person.direction = Math.random() > 0.5 ? Math.PI / 2 : -Math.PI / 2
           } else {
             // Switch to horizontal sidewalk
-            person.sidewalkOrientation = 'horizontal';
+            person.sidewalkOrientation = 'horizontal'
             // Ensure we're aligned with the horizontal sidewalk
-            person.mesh.position.z = nearestHorizontalRoad + (Math.random() > 0.5 ? streetWidth * 0.4 : -streetWidth * 0.4);
+            person.mesh.position.z =
+              nearestHorizontalRoad +
+              (Math.random() > 0.5 ? streetWidth * 0.4 : -streetWidth * 0.4)
             // Choose East or West
-            person.direction = Math.random() > 0.5 ? 0 : Math.PI;
+            person.direction = Math.random() > 0.5 ? 0 : Math.PI
           }
         }
 
         // Update rotation to match direction
-        person.mesh.rotation.y = person.direction;
-      });
+        person.mesh.rotation.y = person.direction
+      })
 
       // Don't call controls.update() since we disabled orbit controls
       renderer.render(scene, camera)
