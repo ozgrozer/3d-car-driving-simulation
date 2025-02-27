@@ -12,6 +12,151 @@ export default function DrivingSimulation () {
     const scene = new THREE.Scene()
     scene.background = new THREE.Color(0x87ceeb) // Sky blue background
 
+    // Audio setup
+    let audioContext
+    let engineSound
+    let brakeSound
+    let engineGainNode
+    let brakeGainNode
+    let engineOscillator
+    let isEngineSoundPlaying = false
+    let isBrakeSoundPlaying = false
+
+    // Initialize audio context
+    function initAudio() {
+      audioContext = new (window.AudioContext || window.webkitAudioContext)()
+
+      // Create engine sound (oscillator-based)
+      engineGainNode = audioContext.createGain()
+      engineGainNode.gain.value = 0
+      engineGainNode.connect(audioContext.destination)
+
+      // Create brake sound
+      brakeGainNode = audioContext.createGain()
+      brakeGainNode.gain.value = 0
+      brakeGainNode.connect(audioContext.destination)
+    }
+
+    // Create and start engine sound
+    function startEngineSound() {
+      if (!audioContext) initAudio()
+
+      if (!isEngineSoundPlaying) {
+        // Create a new oscillator for the engine sound
+        engineOscillator = audioContext.createOscillator()
+        engineOscillator.type = 'sawtooth'
+        engineOscillator.frequency.value = 50
+
+        // Add a filter for more realistic engine sound
+        const engineFilter = audioContext.createBiquadFilter()
+        engineFilter.type = 'lowpass'
+        engineFilter.frequency.value = 400
+
+        // Connect oscillator -> filter -> gain -> output
+        engineOscillator.connect(engineFilter)
+        engineFilter.connect(engineGainNode)
+
+        // Start the oscillator
+        engineOscillator.start()
+        isEngineSoundPlaying = true
+
+        // Start with a low volume
+        engineGainNode.gain.setValueAtTime(0.05, audioContext.currentTime)
+      }
+    }
+
+    // Stop engine sound
+    function stopEngineSound() {
+      if (isEngineSoundPlaying) {
+        // Fade out to avoid clicks
+        engineGainNode.gain.setValueAtTime(engineGainNode.gain.value, audioContext.currentTime)
+        engineGainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.1)
+
+        // Stop after fade-out
+        setTimeout(() => {
+          engineOscillator.stop()
+          isEngineSoundPlaying = false
+        }, 100)
+      }
+    }
+
+    // Update engine sound based on speed
+    function updateEngineSound(speed) {
+      if (!audioContext) return
+
+      if (speed > 0) {
+        if (!isEngineSoundPlaying) {
+          startEngineSound()
+        }
+
+        // Map speed to frequency (engine pitch)
+        const baseFreq = 50
+        const maxFreq = 120
+        const mappedFreq = baseFreq + (maxFreq - baseFreq) * (speed / maxSpeed)
+
+        // Update oscillator frequency
+        engineOscillator.frequency.setValueAtTime(mappedFreq, audioContext.currentTime)
+
+        // Adjust volume based on speed
+        const volume = 0.05 + (speed / maxSpeed) * 0.15
+        engineGainNode.gain.setValueAtTime(volume, audioContext.currentTime)
+      } else if (isEngineSoundPlaying && speed === 0) {
+        stopEngineSound()
+      }
+    }
+
+    // Play brake sound
+    function playBrakeSound() {
+      if (!audioContext) initAudio()
+
+      if (!isBrakeSoundPlaying) {
+        isBrakeSoundPlaying = true
+
+        // Create a noise source for brake sound
+        const bufferSize = audioContext.sampleRate * 0.5
+        const buffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate)
+        const data = buffer.getChannelData(0)
+
+        // Fill buffer with filtered noise
+        for (let i = 0; i < bufferSize; i++) {
+          // High-frequency noise that decreases over time
+          data[i] = (Math.random() * 2 - 1) * Math.max(0, 1 - i / bufferSize)
+        }
+
+        // Create and configure noise source
+        const brakeSource = audioContext.createBufferSource()
+        brakeSource.buffer = buffer
+
+        // Add a bandpass filter for squeal effect
+        const brakeFilter = audioContext.createBiquadFilter()
+        brakeFilter.type = 'bandpass'
+        brakeFilter.frequency.value = 2000
+        brakeFilter.Q.value = 10
+
+        // Connect noise -> filter -> gain -> output
+        brakeSource.connect(brakeFilter)
+        brakeFilter.connect(brakeGainNode)
+
+        // Set gain and play
+        brakeGainNode.gain.setValueAtTime(0, audioContext.currentTime)
+        brakeGainNode.gain.linearRampToValueAtTime(0.1, audioContext.currentTime + 0.1)
+        brakeSource.start()
+
+        // Schedule stop and cleanup
+        brakeSource.onended = () => {
+          isBrakeSoundPlaying = false
+        }
+      }
+    }
+
+    // Stop brake sound
+    function stopBrakeSound() {
+      if (isBrakeSoundPlaying) {
+        brakeGainNode.gain.setValueAtTime(brakeGainNode.gain.value, audioContext.currentTime)
+        brakeGainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.2)
+      }
+    }
+
     // Camera setup
     const camera = new THREE.PerspectiveCamera(
       75,
@@ -47,11 +192,18 @@ export default function DrivingSimulation () {
 
     // Event listeners for keyboard controls
     const handleKeyDown = e => {
-      if (e.key.toLowerCase() === 'w') keyState.w = true
+      if (e.key.toLowerCase() === 'w') {
+        keyState.w = true
+        // Ensure audio context is initialized on first user interaction
+        if (!audioContext) initAudio()
+      }
       if (e.key.toLowerCase() === 'a') keyState.a = true
       if (e.key.toLowerCase() === 's') keyState.s = true
       if (e.key.toLowerCase() === 'd') keyState.d = true
-      if (e.key === ' ') keyState.space = true
+      if (e.key === ' ') {
+        keyState.space = true
+        playBrakeSound()
+      }
     }
 
     const handleKeyUp = e => {
@@ -59,7 +211,10 @@ export default function DrivingSimulation () {
       if (e.key.toLowerCase() === 'a') keyState.a = false
       if (e.key.toLowerCase() === 's') keyState.s = false
       if (e.key.toLowerCase() === 'd') keyState.d = false
-      if (e.key === ' ') keyState.space = false
+      if (e.key === ' ') {
+        keyState.space = false
+        stopBrakeSound()
+      }
     }
 
     window.addEventListener('keydown', handleKeyDown)
@@ -779,6 +934,9 @@ export default function DrivingSimulation () {
         }
       }
 
+      // Update engine sound based on speed
+      updateEngineSound(Math.abs(playerSpeed))
+
       // Calculate speed in km/h and distance
       speedKmh = Math.abs(playerSpeed * speedConversionFactor)
 
@@ -1113,6 +1271,14 @@ export default function DrivingSimulation () {
       window.removeEventListener('keyup', handleKeyUp)
       mountRef.current.removeChild(renderer.domElement)
       document.body.removeChild(speedometerDiv)
+
+      // Clean up audio
+      if (audioContext) {
+        if (isEngineSoundPlaying) {
+          engineOscillator.stop()
+        }
+        audioContext.close()
+      }
     }
   }, []) // Empty dependency array ensures this runs once on mount
 
