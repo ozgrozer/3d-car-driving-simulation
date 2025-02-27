@@ -22,6 +22,44 @@ export default function DrivingSimulation () {
     camera.position.set(50, 50, 50)
     camera.lookAt(0, 0, 0)
 
+    // Keyboard state tracking
+    const keyState = {
+      w: false,
+      a: false,
+      s: false,
+      d: false,
+      space: false
+    }
+
+    // Player car variables
+    let playerCar
+    let playerSpeed = 0
+    const maxSpeed = 0.5
+    const acceleration = 0.01
+    const deceleration = 0.005
+    const brakeStrength = 0.03
+    const turnSpeed = 0.03
+
+    // Event listeners for keyboard controls
+    const handleKeyDown = (e) => {
+      if (e.key.toLowerCase() === 'w') keyState.w = true
+      if (e.key.toLowerCase() === 'a') keyState.a = true
+      if (e.key.toLowerCase() === 's') keyState.s = true
+      if (e.key.toLowerCase() === 'd') keyState.d = true
+      if (e.key === ' ') keyState.space = true
+    }
+
+    const handleKeyUp = (e) => {
+      if (e.key.toLowerCase() === 'w') keyState.w = false
+      if (e.key.toLowerCase() === 'a') keyState.a = false
+      if (e.key.toLowerCase() === 's') keyState.s = false
+      if (e.key.toLowerCase() === 'd') keyState.d = false
+      if (e.key === ' ') keyState.space = false
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    window.addEventListener('keyup', handleKeyUp)
+
     // Renderer setup
     const renderer = new THREE.WebGLRenderer({ antialias: true })
     renderer.setSize(window.innerWidth, window.innerHeight)
@@ -438,58 +476,186 @@ export default function DrivingSimulation () {
       people.push(createPerson(x, z))
     }
 
+    // Create player car
+    function createPlayerCar() {
+      const carGroup = new THREE.Group()
+
+      // Car body - slightly larger and sportier than regular cars
+      const bodyGeometry = new THREE.BoxGeometry(2.2, 1, 4.5)
+      const bodyMaterial = new THREE.MeshStandardMaterial({
+        color: 0xff0000, // Red car for player
+        roughness: 0.3,
+        metalness: 0.8
+      })
+      const body = new THREE.Mesh(bodyGeometry, bodyMaterial)
+      body.position.y = 0.5
+      carGroup.add(body)
+
+      // Car top
+      const topGeometry = new THREE.BoxGeometry(2, 0.8, 2.2)
+      const topMaterial = new THREE.MeshStandardMaterial({
+        color: 0xff2200,
+        roughness: 0.3,
+        metalness: 0.8
+      })
+      const top = new THREE.Mesh(topGeometry, topMaterial)
+      top.position.set(0, 1.4, -0.3)
+      carGroup.add(top)
+
+      // Wheels
+      const wheelGeometry = new THREE.CylinderGeometry(0.5, 0.5, 0.4, 16)
+      const wheelMaterial = new THREE.MeshStandardMaterial({ color: 0x111111 })
+
+      const wheel1 = new THREE.Mesh(wheelGeometry, wheelMaterial)
+      wheel1.position.set(1.2, 0.5, 1.4)
+      wheel1.rotation.z = Math.PI / 2
+      carGroup.add(wheel1)
+
+      const wheel2 = new THREE.Mesh(wheelGeometry, wheelMaterial)
+      wheel2.position.set(-1.2, 0.5, 1.4)
+      wheel2.rotation.z = Math.PI / 2
+      carGroup.add(wheel2)
+
+      const wheel3 = new THREE.Mesh(wheelGeometry, wheelMaterial)
+      wheel3.position.set(1.2, 0.5, -1.4)
+      wheel3.rotation.z = Math.PI / 2
+      carGroup.add(wheel3)
+
+      const wheel4 = new THREE.Mesh(wheelGeometry, wheelMaterial)
+      wheel4.position.set(-1.2, 0.5, -1.4)
+      wheel4.rotation.z = Math.PI / 2
+      carGroup.add(wheel4)
+
+      // Headlights
+      const headlightGeometry = new THREE.SphereGeometry(0.25, 16, 16)
+      const headlightMaterial = new THREE.MeshStandardMaterial({
+        color: 0xffffcc,
+        emissive: 0xffffcc,
+        emissiveIntensity: 1
+      })
+
+      const headlight1 = new THREE.Mesh(headlightGeometry, headlightMaterial)
+      headlight1.position.set(0.7, 0.5, 2.25)
+      carGroup.add(headlight1)
+
+      const headlight2 = new THREE.Mesh(headlightGeometry, headlightMaterial)
+      headlight2.position.set(-0.7, 0.5, 2.25)
+      carGroup.add(headlight2)
+
+      // Taillights
+      const taillightMaterial = new THREE.MeshStandardMaterial({
+        color: 0xff0000,
+        emissive: 0xff0000,
+        emissiveIntensity: 1
+      })
+
+      const taillight1 = new THREE.Mesh(headlightGeometry, taillightMaterial)
+      taillight1.position.set(0.7, 0.5, -2.25)
+      carGroup.add(taillight1)
+
+      const taillight2 = new THREE.Mesh(headlightGeometry, taillightMaterial)
+      taillight2.position.set(-0.7, 0.5, -2.25)
+      carGroup.add(taillight2)
+
+      // Place the car on a road
+      const randomRoadIndex = Math.floor(Math.random() * (gridSize + 1))
+      carGroup.position.set(
+        randomRoadIndex * (blockSize + streetWidth) - citySize / 2 - streetWidth / 2 + streetWidth / 2,
+        0,
+        0
+      )
+
+      carGroup.castShadow = true
+      carGroup.receiveShadow = true
+      scene.add(carGroup)
+
+      return carGroup
+    }
+
+    // Initialize player car
+    playerCar = createPlayerCar()
+
+    // Initial camera position behind the car
+    const initialCameraPosition = new THREE.Vector3(
+      playerCar.position.x - Math.sin(playerCar.rotation.y) * 12,
+      playerCar.position.y + 5,
+      playerCar.position.z - Math.cos(playerCar.rotation.y) * 12
+    );
+    camera.position.copy(initialCameraPosition);
+    camera.lookAt(playerCar.position);
+
+    // Disable orbit controls completely
+    controls.enabled = false;
+
     // Animation loop
     function animate () {
       window.requestAnimationFrame(animate)
 
-      // Update car positions
-      cars.forEach(car => {
-        if (car.direction === 'horizontal') {
-          car.mesh.position.x += car.speed
-          if (car.mesh.position.x > citySize / 2) {
-            car.mesh.position.x = -citySize / 2
-          }
-        } else {
-          car.mesh.position.z += car.speed
-          if (car.mesh.position.z > citySize / 2) {
-            car.mesh.position.z = -citySize / 2
-          }
+      // Handle player car controls
+      if (keyState.w) {
+        // Accelerate forward
+        playerSpeed = Math.min(playerSpeed + acceleration, maxSpeed)
+      } else if (keyState.s) {
+        // Accelerate backward
+        playerSpeed = Math.max(playerSpeed - acceleration, -maxSpeed / 1.5)
+      } else {
+        // Natural deceleration when not pressing forward/backward
+        if (playerSpeed > 0) {
+          playerSpeed = Math.max(playerSpeed - deceleration, 0)
+        } else if (playerSpeed < 0) {
+          playerSpeed = Math.min(playerSpeed + deceleration, 0)
         }
-      })
+      }
 
-      // Update people positions
-      people.forEach(person => {
-        person.walkCycle += 0.1
-
-        // Simple walking animation
-        const leg1 = person.mesh.children[2]
-        const leg2 = person.mesh.children[3]
-        leg1.rotation.x = Math.sin(person.walkCycle) * 0.5
-        leg2.rotation.x = Math.sin(person.walkCycle + Math.PI) * 0.5
-
-        // Move person
-        person.mesh.position.x += Math.cos(person.direction) * person.speed
-        person.mesh.position.z += Math.sin(person.direction) * person.speed
-
-        // Keep within city bounds
-        if (person.mesh.position.x > citySize / 2) {
-          person.direction = Math.PI - person.direction
+      // Apply brakes
+      if (keyState.space) {
+        if (playerSpeed > 0) {
+          playerSpeed = Math.max(playerSpeed - brakeStrength, 0)
+        } else if (playerSpeed < 0) {
+          playerSpeed = Math.min(playerSpeed + brakeStrength, 0)
         }
-        if (person.mesh.position.x < -citySize / 2) {
-          person.direction = Math.PI - person.direction
-        }
-        if (person.mesh.position.z > citySize / 2) {
-          person.direction = -person.direction
-        }
-        if (person.mesh.position.z < -citySize / 2) {
-          person.direction = -person.direction
-        }
+      }
 
-        // Update rotation to match direction
-        person.mesh.rotation.y = person.direction
-      })
+      // Turning
+      if (keyState.a) {
+        playerCar.rotation.y += turnSpeed * (playerSpeed !== 0 ? 1 : 0)
+      }
+      if (keyState.d) {
+        playerCar.rotation.y -= turnSpeed * (playerSpeed !== 0 ? 1 : 0)
+      }
 
-      controls.update()
+      // Move player car
+      if (playerSpeed !== 0) {
+        playerCar.position.x += Math.sin(playerCar.rotation.y) * playerSpeed
+        playerCar.position.z += Math.cos(playerCar.rotation.y) * playerSpeed
+      }
+
+      // Keep player within bounds
+      const halfCitySize = citySize / 2
+      playerCar.position.x = Math.max(Math.min(playerCar.position.x, halfCitySize), -halfCitySize)
+      playerCar.position.z = Math.max(Math.min(playerCar.position.z, halfCitySize), -halfCitySize)
+
+      // Update camera to follow car - improved version
+      // Set camera directly behind car at fixed distance - more reliable approach
+      const cameraDistance = 15; // Increased for better visibility
+      const cameraHeight = 6;    // Slightly higher for better view
+
+      // Calculate position directly rather than using lerp
+      camera.position.set(
+        playerCar.position.x - Math.sin(playerCar.rotation.y) * cameraDistance,
+        playerCar.position.y + cameraHeight,
+        playerCar.position.z - Math.cos(playerCar.rotation.y) * cameraDistance
+      );
+
+      // Look at a point slightly above the car
+      const carLookPoint = new THREE.Vector3(
+        playerCar.position.x,
+        playerCar.position.y + 1,
+        playerCar.position.z
+      );
+      camera.lookAt(carLookPoint);
+
+      // Don't call controls.update() since we disabled orbit controls
       renderer.render(scene, camera)
     }
 
@@ -507,6 +673,8 @@ export default function DrivingSimulation () {
     // Cleanup function
     return () => {
       window.removeEventListener('resize', handleResize)
+      window.removeEventListener('keydown', handleKeyDown)
+      window.removeEventListener('keyup', handleKeyUp)
       mountRef.current.removeChild(renderer.domElement)
     }
   }, []) // Empty dependency array ensures this runs once on mount
