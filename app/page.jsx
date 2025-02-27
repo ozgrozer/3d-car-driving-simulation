@@ -791,7 +791,7 @@ export default function DrivingSimulation () {
     }
 
     // Add cars to roads
-    for (let i = 0; i < 65; i++) {
+    for (let i = 0; i < 130; i++) {
       let x, z, direction, movingDirection
 
       if (Math.random() > 0.5) {
@@ -891,7 +891,7 @@ export default function DrivingSimulation () {
     }
 
     // Add people to sidewalks
-    for (let i = 0; i < 100; i++) {
+    for (let i = 0; i < 200; i++) {
       let x, z
       let sidewalkOrientation // Track if person is on horizontal or vertical sidewalk
 
