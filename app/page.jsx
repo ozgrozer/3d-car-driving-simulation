@@ -41,7 +41,7 @@ export default function DrivingSimulation () {
     const turnSpeed = 0.03
 
     // Event listeners for keyboard controls
-    const handleKeyDown = (e) => {
+    const handleKeyDown = e => {
       if (e.key.toLowerCase() === 'w') keyState.w = true
       if (e.key.toLowerCase() === 'a') keyState.a = true
       if (e.key.toLowerCase() === 's') keyState.s = true
@@ -49,7 +49,7 @@ export default function DrivingSimulation () {
       if (e.key === ' ') keyState.space = true
     }
 
-    const handleKeyUp = (e) => {
+    const handleKeyUp = e => {
       if (e.key.toLowerCase() === 'w') keyState.w = false
       if (e.key.toLowerCase() === 'a') keyState.a = false
       if (e.key.toLowerCase() === 's') keyState.s = false
@@ -108,7 +108,7 @@ export default function DrivingSimulation () {
     const citySize = gridSize * (blockSize + streetWidth)
 
     // Create buildings
-    function createBuilding(x, z, width, depth, height) {
+    function createBuilding (x, z, width, depth, height) {
       const buildingGeometry = new THREE.BoxGeometry(width, height, depth)
       const buildingMaterial = new THREE.MeshStandardMaterial({
         color: Math.random() * 0xffffff,
@@ -223,13 +223,7 @@ export default function DrivingSimulation () {
             minSize
           )
 
-          createBuilding(
-            blockX,
-            blockZ,
-            buildingWidth,
-            buildingDepth,
-            height
-          )
+          createBuilding(blockX, blockZ, buildingWidth, buildingDepth, height)
         } else {
           // Two buildings with proper spacing
           // Make subBlockSize larger by using a smaller divisor
@@ -237,7 +231,8 @@ export default function DrivingSimulation () {
 
           for (let k = 0; k < buildingsPerBlock; k++) {
             // Calculate maximum allowed offset with reduced distance between buildings
-            const maxOffset = (blockSize - safetyMargin * 2 - subBlockSize) / 2.5
+            const maxOffset =
+              (blockSize - safetyMargin * 2 - subBlockSize) / 2.5
 
             // Limit the offset to stay well within boundaries
             const offsetX = (Math.random() - 0.5) * maxOffset * 2
@@ -249,8 +244,14 @@ export default function DrivingSimulation () {
             const minDimension = subBlockSize * 0.75
 
             // Narrower range for random sizing to keep buildings more consistent
-            const width = Math.max(subBlockSize * (0.75 + Math.random() * 0.2), minDimension)
-            const depth = Math.max(subBlockSize * (0.75 + Math.random() * 0.2), minDimension)
+            const width = Math.max(
+              subBlockSize * (0.75 + Math.random() * 0.2),
+              minDimension
+            )
+            const depth = Math.max(
+              subBlockSize * (0.75 + Math.random() * 0.2),
+              minDimension
+            )
 
             // Verify building won't overflow
             const buildingLeft = blockX + offsetX - width / 2
@@ -265,10 +266,12 @@ export default function DrivingSimulation () {
             const blockBottom = blockZ + blockSize / 2 - safetyMargin
 
             // Only create building if it stays completely within the safe block area
-            if (buildingLeft >= blockLeft &&
-                buildingRight <= blockRight &&
-                buildingTop >= blockTop &&
-                buildingBottom <= blockBottom) {
+            if (
+              buildingLeft >= blockLeft &&
+              buildingRight <= blockRight &&
+              buildingTop >= blockTop &&
+              buildingBottom <= blockBottom
+            ) {
               createBuilding(
                 blockX + offsetX,
                 blockZ + offsetZ,
@@ -294,7 +297,7 @@ export default function DrivingSimulation () {
       roughness: 0.9,
       emissive: 0xffffff,
       emissiveIntensity: 0.2
-    });
+    })
 
     // Horizontal roads
     for (let i = 0; i <= gridSize; i++) {
@@ -308,30 +311,31 @@ export default function DrivingSimulation () {
       scene.add(road)
 
       // Add white edge lines
-      const leftEdgeGeometry = new THREE.PlaneGeometry(0.2, citySize);
-      const leftEdge = new THREE.Mesh(leftEdgeGeometry, roadLineMaterial);
-      leftEdge.rotation.x = -Math.PI / 2;
-      leftEdge.position.set(roadX + 0.5, 0.02, 0);
-      scene.add(leftEdge);
+      const leftEdgeGeometry = new THREE.PlaneGeometry(0.2, citySize)
+      const leftEdge = new THREE.Mesh(leftEdgeGeometry, roadLineMaterial)
+      leftEdge.rotation.x = -Math.PI / 2
+      leftEdge.position.set(roadX + 0.5, 0.02, 0)
+      scene.add(leftEdge)
 
-      const rightEdgeGeometry = new THREE.PlaneGeometry(0.2, citySize);
-      const rightEdge = new THREE.Mesh(rightEdgeGeometry, roadLineMaterial);
-      rightEdge.rotation.x = -Math.PI / 2;
-      rightEdge.position.set(roadX + streetWidth - 0.5, 0.02, 0);
-      scene.add(rightEdge);
+      const rightEdgeGeometry = new THREE.PlaneGeometry(0.2, citySize)
+      const rightEdge = new THREE.Mesh(rightEdgeGeometry, roadLineMaterial)
+      rightEdge.rotation.x = -Math.PI / 2
+      rightEdge.position.set(roadX + streetWidth - 0.5, 0.02, 0)
+      scene.add(rightEdge)
 
       // Simplified center dashed line
       for (let dash = 0; dash < citySize; dash += 8) {
-        if (dash % 16 < 8) { // Creates a dashed pattern
-          const dashGeometry = new THREE.PlaneGeometry(0.4, 4);
-          const dashLine = new THREE.Mesh(dashGeometry, roadLineMaterial);
-          dashLine.rotation.x = -Math.PI / 2;
+        if (dash % 16 < 8) {
+          // Creates a dashed pattern
+          const dashGeometry = new THREE.PlaneGeometry(0.4, 4)
+          const dashLine = new THREE.Mesh(dashGeometry, roadLineMaterial)
+          dashLine.rotation.x = -Math.PI / 2
           dashLine.position.set(
             roadX + streetWidth / 2,
             0.02,
             dash - citySize / 2 + 2
-          );
-          scene.add(dashLine);
+          )
+          scene.add(dashLine)
         }
       }
     }
@@ -348,30 +352,31 @@ export default function DrivingSimulation () {
       scene.add(road)
 
       // Add white edge lines
-      const topEdgeGeometry = new THREE.PlaneGeometry(citySize, 0.2);
-      const topEdge = new THREE.Mesh(topEdgeGeometry, roadLineMaterial);
-      topEdge.rotation.x = -Math.PI / 2;
-      topEdge.position.set(0, 0.02, roadZ + 0.5);
-      scene.add(topEdge);
+      const topEdgeGeometry = new THREE.PlaneGeometry(citySize, 0.2)
+      const topEdge = new THREE.Mesh(topEdgeGeometry, roadLineMaterial)
+      topEdge.rotation.x = -Math.PI / 2
+      topEdge.position.set(0, 0.02, roadZ + 0.5)
+      scene.add(topEdge)
 
-      const bottomEdgeGeometry = new THREE.PlaneGeometry(citySize, 0.2);
-      const bottomEdge = new THREE.Mesh(bottomEdgeGeometry, roadLineMaterial);
-      bottomEdge.rotation.x = -Math.PI / 2;
-      bottomEdge.position.set(0, 0.02, roadZ + streetWidth - 0.5);
-      scene.add(bottomEdge);
+      const bottomEdgeGeometry = new THREE.PlaneGeometry(citySize, 0.2)
+      const bottomEdge = new THREE.Mesh(bottomEdgeGeometry, roadLineMaterial)
+      bottomEdge.rotation.x = -Math.PI / 2
+      bottomEdge.position.set(0, 0.02, roadZ + streetWidth - 0.5)
+      scene.add(bottomEdge)
 
       // Simplified center dashed line
       for (let dash = 0; dash < citySize; dash += 8) {
-        if (dash % 16 < 8) { // Creates a dashed pattern
-          const dashGeometry = new THREE.PlaneGeometry(4, 0.4);
-          const dashLine = new THREE.Mesh(dashGeometry, roadLineMaterial);
-          dashLine.rotation.x = -Math.PI / 2;
+        if (dash % 16 < 8) {
+          // Creates a dashed pattern
+          const dashGeometry = new THREE.PlaneGeometry(4, 0.4)
+          const dashLine = new THREE.Mesh(dashGeometry, roadLineMaterial)
+          dashLine.rotation.x = -Math.PI / 2
           dashLine.position.set(
             dash - citySize / 2 + 2,
             0.02,
             roadZ + streetWidth / 2
-          );
-          scene.add(dashLine);
+          )
+          scene.add(dashLine)
         }
       }
     }
@@ -691,7 +696,10 @@ export default function DrivingSimulation () {
       // Place the car on a road
       const randomRoadIndex = Math.floor(Math.random() * (gridSize + 1))
       carGroup.position.set(
-        randomRoadIndex * (blockSize + streetWidth) - citySize / 2 - streetWidth / 2 + streetWidth / 2,
+        randomRoadIndex * (blockSize + streetWidth) -
+          citySize / 2 -
+          streetWidth / 2 +
+          streetWidth / 2,
         0,
         0
       )
@@ -762,9 +770,15 @@ export default function DrivingSimulation () {
       }
 
       // Keep player within bounds
-      const halfCitySize = citySize / 2
-      playerCar.position.x = Math.max(Math.min(playerCar.position.x, halfCitySize), -halfCitySize)
-      playerCar.position.z = Math.max(Math.min(playerCar.position.z, halfCitySize), -halfCitySize)
+      const groundHalfSize = 100 // Half of 200 (ground plane size)
+      playerCar.position.x = Math.max(
+        Math.min(playerCar.position.x, groundHalfSize),
+        -groundHalfSize
+      )
+      playerCar.position.z = Math.max(
+        Math.min(playerCar.position.z, groundHalfSize),
+        -groundHalfSize
+      )
 
       // Update camera to follow car - improved version
       // Set camera directly behind car at fixed distance - more reliable approach
@@ -795,13 +809,29 @@ export default function DrivingSimulation () {
           car.mesh.position.x += car.speed
 
           // Check if car should turn at an intersection inside the city
-          const isNearIntersection = Math.abs(Math.round((car.mesh.position.x + citySize / 2) / (blockSize + streetWidth)) *
-            (blockSize + streetWidth) - (car.mesh.position.x + citySize / 2)) < 1
+          const isNearIntersection =
+            Math.abs(
+              Math.round(
+                (car.mesh.position.x + citySize / 2) / (blockSize + streetWidth)
+              ) *
+                (blockSize + streetWidth) -
+                (car.mesh.position.x + citySize / 2)
+            ) < 1
 
-          if (isNearIntersection && car.lastTurnTime > 100 && Math.random() < car.turnProbability) {
+          if (
+            isNearIntersection &&
+            car.lastTurnTime > 100 &&
+            Math.random() < car.turnProbability
+          ) {
             // Find the nearest road intersection
-            const nearestRoadIndex = Math.round((car.mesh.position.z + citySize / 2) / (blockSize + streetWidth))
-            const nearestRoadZ = nearestRoadIndex * (blockSize + streetWidth) - citySize / 2 - streetWidth / 2 + streetWidth / 2
+            const nearestRoadIndex = Math.round(
+              (car.mesh.position.z + citySize / 2) / (blockSize + streetWidth)
+            )
+            const nearestRoadZ =
+              nearestRoadIndex * (blockSize + streetWidth) -
+              citySize / 2 -
+              streetWidth / 2 +
+              streetWidth / 2
 
             // Make sure we're not at the edge of the grid
             if (nearestRoadIndex >= 0 && nearestRoadIndex <= gridSize) {
@@ -809,8 +839,13 @@ export default function DrivingSimulation () {
               const turnDirection = Math.random() > 0.5 ? 1 : -1
 
               // Snap to the intersection
-              car.mesh.position.x = Math.round((car.mesh.position.x + citySize / 2) / (blockSize + streetWidth)) *
-                (blockSize + streetWidth) - citySize / 2
+              car.mesh.position.x =
+                Math.round(
+                  (car.mesh.position.x + citySize / 2) /
+                    (blockSize + streetWidth)
+                ) *
+                  (blockSize + streetWidth) -
+                citySize / 2
 
               // Adjust to the nearest road
               car.mesh.position.z = nearestRoadZ
@@ -834,11 +869,19 @@ export default function DrivingSimulation () {
           }
 
           // Check if car reached the edge of the city
-          if ((car.speed > 0 && car.mesh.position.x > citySize / 2) ||
-              (car.speed < 0 && car.mesh.position.x < -citySize / 2)) {
+          if (
+            (car.speed > 0 && car.mesh.position.x > citySize / 2) ||
+            (car.speed < 0 && car.mesh.position.x < -citySize / 2)
+          ) {
             // Find the nearest road intersection
-            const nearestRoadIndex = Math.round((car.mesh.position.z + citySize / 2) / (blockSize + streetWidth))
-            const nearestRoadZ = nearestRoadIndex * (blockSize + streetWidth) - citySize / 2 - streetWidth / 2 + streetWidth / 2
+            const nearestRoadIndex = Math.round(
+              (car.mesh.position.z + citySize / 2) / (blockSize + streetWidth)
+            )
+            const nearestRoadZ =
+              nearestRoadIndex * (blockSize + streetWidth) -
+              citySize / 2 -
+              streetWidth / 2 +
+              streetWidth / 2
 
             // Randomly choose to turn left or right
             const turnDirection = Math.random() > 0.5 ? 1 : -1
@@ -873,13 +916,29 @@ export default function DrivingSimulation () {
           car.mesh.position.z += car.speed
 
           // Check if car should turn at an intersection inside the city
-          const isNearIntersection = Math.abs(Math.round((car.mesh.position.z + citySize / 2) / (blockSize + streetWidth)) *
-            (blockSize + streetWidth) - (car.mesh.position.z + citySize / 2)) < 1
+          const isNearIntersection =
+            Math.abs(
+              Math.round(
+                (car.mesh.position.z + citySize / 2) / (blockSize + streetWidth)
+              ) *
+                (blockSize + streetWidth) -
+                (car.mesh.position.z + citySize / 2)
+            ) < 1
 
-          if (isNearIntersection && car.lastTurnTime > 100 && Math.random() < car.turnProbability) {
+          if (
+            isNearIntersection &&
+            car.lastTurnTime > 100 &&
+            Math.random() < car.turnProbability
+          ) {
             // Find the nearest road intersection
-            const nearestRoadIndex = Math.round((car.mesh.position.x + citySize / 2) / (blockSize + streetWidth))
-            const nearestRoadX = nearestRoadIndex * (blockSize + streetWidth) - citySize / 2 - streetWidth / 2 + streetWidth / 2
+            const nearestRoadIndex = Math.round(
+              (car.mesh.position.x + citySize / 2) / (blockSize + streetWidth)
+            )
+            const nearestRoadX =
+              nearestRoadIndex * (blockSize + streetWidth) -
+              citySize / 2 -
+              streetWidth / 2 +
+              streetWidth / 2
 
             // Make sure we're not at the edge of the grid
             if (nearestRoadIndex >= 0 && nearestRoadIndex <= gridSize) {
@@ -887,8 +946,13 @@ export default function DrivingSimulation () {
               const turnDirection = Math.random() > 0.5 ? 1 : -1
 
               // Snap to the intersection
-              car.mesh.position.z = Math.round((car.mesh.position.z + citySize / 2) / (blockSize + streetWidth)) *
-                (blockSize + streetWidth) - citySize / 2
+              car.mesh.position.z =
+                Math.round(
+                  (car.mesh.position.z + citySize / 2) /
+                    (blockSize + streetWidth)
+                ) *
+                  (blockSize + streetWidth) -
+                citySize / 2
 
               // Adjust to the nearest road
               car.mesh.position.x = nearestRoadX
@@ -912,11 +976,19 @@ export default function DrivingSimulation () {
           }
 
           // Check if car reached the edge of the city
-          if ((car.speed > 0 && car.mesh.position.z > citySize / 2) ||
-              (car.speed < 0 && car.mesh.position.z < -citySize / 2)) {
+          if (
+            (car.speed > 0 && car.mesh.position.z > citySize / 2) ||
+            (car.speed < 0 && car.mesh.position.z < -citySize / 2)
+          ) {
             // Find the nearest road intersection
-            const nearestRoadIndex = Math.round((car.mesh.position.x + citySize / 2) / (blockSize + streetWidth))
-            const nearestRoadX = nearestRoadIndex * (blockSize + streetWidth) - citySize / 2 - streetWidth / 2 + streetWidth / 2
+            const nearestRoadIndex = Math.round(
+              (car.mesh.position.x + citySize / 2) / (blockSize + streetWidth)
+            )
+            const nearestRoadX =
+              nearestRoadIndex * (blockSize + streetWidth) -
+              citySize / 2 -
+              streetWidth / 2 +
+              streetWidth / 2
 
             // Randomly choose to turn left or right
             const turnDirection = Math.random() > 0.5 ? 1 : -1
