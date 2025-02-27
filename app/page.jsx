@@ -1778,7 +1778,7 @@ export default function DrivingSimulation () {
     dashboardDiv.style.padding = '15px 25px'
     dashboardDiv.style.borderRadius = '10px'
     dashboardDiv.style.fontFamily = '"Orbitron", "Rajdhani", sans-serif'
-    dashboardDiv.style.fontSize = '18px'
+    dashboardDiv.style.fontSize = '14px'  // Reduced from 18px
     dashboardDiv.style.zIndex = '1000'
     dashboardDiv.style.display = 'flex'
     dashboardDiv.style.gap = '25px'
@@ -1788,25 +1788,25 @@ export default function DrivingSimulation () {
     // Create speed display
     const speedDiv = document.createElement('div')
     speedDiv.innerHTML =
-      '<div style="font-size:14px;color:#0af;margin-bottom:5px">SPEED</div><div id="speed-value" style="font-size:28px;font-weight:bold">0</div><div style="font-size:14px">km/h</div>'
+      '<div style="font-size:12px;color:#0af;margin-bottom:5px">SPEED</div><div id="speed-value" style="font-size:22px;font-weight:bold">0</div><div style="font-size:12px">km/h</div>'
     dashboardDiv.appendChild(speedDiv)
 
     // Create distance display
     const distanceDiv = document.createElement('div')
     distanceDiv.innerHTML =
-      '<div style="font-size:14px;color:#0af;margin-bottom:5px">DISTANCE</div><div id="distance-value" style="font-size:28px;font-weight:bold">0.0</div><div style="font-size:14px">km</div>'
+      '<div style="font-size:12px;color:#0af;margin-bottom:5px">DISTANCE</div><div id="distance-value" style="font-size:22px;font-weight:bold">0.0</div><div style="font-size:12px">km</div>'
     dashboardDiv.appendChild(distanceDiv)
 
     // Create health meter with visual bar
     const healthDiv = document.createElement('div')
     healthDiv.innerHTML =
-      '<div style="font-size:14px;color:#0af;margin-bottom:5px">HEALTH</div><div style="width:80px;height:20px;background:rgba(255,255,255,0.2);border-radius:10px;overflow:hidden"><div id="health-bar" style="width:100%;height:100%;background:linear-gradient(90deg,#f00,#0f0);transition:width 0.3s"></div></div><div id="health-value" style="font-size:14px;text-align:center">100%</div>'
+      '<div style="font-size:12px;color:#0af;margin-bottom:5px">HEALTH</div><div style="width:80px;height:18px;background:rgba(255,255,255,0.2);border-radius:10px;overflow:hidden"><div id="health-bar" style="width:100%;height:100%;background:linear-gradient(90deg,#f00,#0f0);transition:width 0.3s"></div></div><div id="health-value" style="font-size:12px;text-align:center">100%</div>'
     dashboardDiv.appendChild(healthDiv)
 
     // Create nitro meter with visual bar
     const nitroDiv = document.createElement('div')
     nitroDiv.innerHTML =
-      '<div style="font-size:14px;color:#0af;margin-bottom:5px">NITRO</div><div style="width:80px;height:20px;background:rgba(255,255,255,0.2);border-radius:10px;overflow:hidden"><div id="nitro-bar" style="width:100%;height:100%;background:linear-gradient(90deg,#00f,#0ff);transition:width 0.3s"></div></div><div id="nitro-value" style="font-size:14px;text-align:center">100%</div>'
+      '<div style="font-size:12px;color:#0af;margin-bottom:5px">NITRO</div><div style="width:80px;height:18px;background:rgba(255,255,255,0.2);border-radius:10px;overflow:hidden"><div id="nitro-bar" style="width:100%;height:100%;background:linear-gradient(90deg,#00f,#0ff);transition:width 0.3s"></div></div><div id="nitro-value" style="font-size:12px;text-align:center">100%</div>'
     dashboardDiv.appendChild(nitroDiv)
 
     document.body.appendChild(dashboardDiv)
@@ -2308,7 +2308,7 @@ export default function DrivingSimulation () {
         '.dashboard, .dashboard-item, .dashboard-value'
       )
       dashboardElements.forEach(element => {
-        element.style.fontSize = '12px'
+        element.style.fontSize = '10px'  // Reduced from 12px
         element.style.padding = '0.2em'
         element.style.margin = '0.1em'
       })
