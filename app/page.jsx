@@ -1592,7 +1592,7 @@ export default function DrivingSimulation () {
     }
 
     // Add people to sidewalks
-    for (let i = 0; i < 200; i++) {
+    for (let i = 0; i < 500; i++) {
       let x, z
       let sidewalkOrientation // Track if person is on horizontal or vertical sidewalk
 
@@ -1778,7 +1778,7 @@ export default function DrivingSimulation () {
     dashboardDiv.style.padding = '15px 25px'
     dashboardDiv.style.borderRadius = '10px'
     dashboardDiv.style.fontFamily = '"Orbitron", "Rajdhani", sans-serif'
-    dashboardDiv.style.fontSize = '14px'  // Reduced from 18px
+    dashboardDiv.style.fontSize = '14px' // Reduced from 18px
     dashboardDiv.style.zIndex = '1000'
     dashboardDiv.style.display = 'flex'
     dashboardDiv.style.gap = '25px'
@@ -2308,7 +2308,7 @@ export default function DrivingSimulation () {
         '.dashboard, .dashboard-item, .dashboard-value'
       )
       dashboardElements.forEach(element => {
-        element.style.fontSize = '10px'  // Reduced from 12px
+        element.style.fontSize = '10px' // Reduced from 12px
         element.style.padding = '0.2em'
         element.style.margin = '0.1em'
       })
