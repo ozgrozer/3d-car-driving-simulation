@@ -1585,7 +1585,7 @@ export default function DrivingSimulation () {
       return {
         mesh: personGroup,
         direction: Math.random() * Math.PI * 2,
-        speed: 0.03 + Math.random() * 0.02,
+        speed: 0.015, // Use a constant, slower speed for all people
         walkCycle: Math.random() * Math.PI * 2,
         sidewalkOrientation: null
       }
@@ -1635,9 +1635,6 @@ export default function DrivingSimulation () {
       if (speedType < 0.15) {
         // Slow walkers (0.005 to 0.015)
         person.speed = 0.005 + Math.random() * 0.01
-      } else if (speedType > 0.75) {
-        // Fast walkers (0.06 to 0.09)
-        person.speed = 0.06 + Math.random() * 0.03
       } else {
         // Normal walkers (0.02 to 0.04)
         person.speed = 0.02 + Math.random() * 0.02
