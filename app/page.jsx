@@ -270,11 +270,46 @@ export default function DrivingSimulation () {
     // Create buildings
     function createBuilding (x, z, width, depth, height) {
       const buildingGeometry = new THREE.BoxGeometry(width, height, depth)
+
+      // Bright and vibrant modern building palette - no dark tones
+      const modernColors = [
+        // Bright glass-like colors
+        0x88CCEE, // Sky blue glass
+        0x66DDAA, // Teal glass
+        0xAACCFF, // Light blue glass
+        0xDDEEFF, // Pale blue glass
+
+        // Light contemporary colors
+        0xFFC09F, // Peach
+        0xFFEE93, // Light yellow
+        0xFCF5C7, // Cream
+        0xA0CED9, // Powder blue
+
+        // Vibrant colors
+        0xFF9EAA, // Coral pink
+        0xADF7B6, // Mint green
+        0xFFDFD3, // Light pink
+        0x9EEBCF, // Seafoam
+        0xFDCB6E, // Sunshine yellow
+        0xFF6B6B, // Bright red
+        0xA3D9FF, // Baby blue
+
+        // Pastel tones
+        0xFFC8DD, // Pastel pink
+        0xBDE0FE, // Pastel blue
+        0xA9DEF9, // Light sky blue
+        0xD0F4DE, // Pastel green
+        0xE4C1F9, // Lavender
+        0xF1F7B5  // Pastel yellow
+      ]
+
+      // Select a random color from the bright modernized palette
       const buildingMaterial = new THREE.MeshStandardMaterial({
-        color: Math.random() * 0xffffff,
-        roughness: 0.7,
-        metalness: 0.2
+        color: modernColors[Math.floor(Math.random() * modernColors.length)],
+        roughness: 0.5,
+        metalness: 0.4
       })
+
       const building = new THREE.Mesh(buildingGeometry, buildingMaterial)
       building.position.set(x, height / 2, z)
       building.castShadow = true
