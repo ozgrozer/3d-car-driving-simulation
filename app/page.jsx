@@ -26,6 +26,10 @@ export default function DrivingSimulation () {
     let isCollisionSoundPlaying = false
     // Add horn sound initialization if needed
     let hornSound
+    // Add nitro sound variables
+    let nitroGainNode
+    let nitroOscillator
+    let isNitroSoundPlaying = false
 
     // Initialize audio context
     function initAudio () {
@@ -48,6 +52,11 @@ export default function DrivingSimulation () {
 
       // Add horn sound initialization if needed
       hornSound = null
+
+      // Create nitro sound
+      nitroGainNode = audioContext.createGain()
+      nitroGainNode.gain.value = 0
+      nitroGainNode.connect(audioContext.destination)
     }
 
     // Create and start engine sound
@@ -418,6 +427,190 @@ export default function DrivingSimulation () {
       }, 250) // Horn plays for only 250ms plus 100ms fade (much shorter)
     }
 
+    // Play nitro sound
+    function playNitroSound() {
+      if (!audioContext) initAudio()
+
+      if (!isNitroSoundPlaying) {
+        isNitroSoundPlaying = true
+
+        // Create a high-pitched whoosh sound with white noise + oscillator
+        nitroOscillator = audioContext.createOscillator()
+        nitroOscillator.type = 'sawtooth'
+        nitroOscillator.frequency.value = 180
+
+        // Create noise for the whoosh effect
+        const bufferSize = audioContext.sampleRate * 0.5
+        const noiseBuffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate)
+        const noiseData = noiseBuffer.getChannelData(0)
+
+        for (let i = 0; i < bufferSize; i++) {
+          noiseData[i] = (Math.random() * 2 - 1) * Math.max(0, 1 - i / bufferSize)
+        }
+
+        const noiseSource = audioContext.createBufferSource()
+        noiseSource.buffer = noiseBuffer
+
+        // Add a bandpass filter for the nitro whoosh
+        const nitroFilter = audioContext.createBiquadFilter()
+        nitroFilter.type = 'bandpass'
+        nitroFilter.frequency.value = 3000
+        nitroFilter.Q.value = 2
+
+        // Add distortion for more aggressive sound
+        const distortion = audioContext.createWaveShaper()
+        function makeDistortionCurve(amount) {
+          const k = typeof amount === 'number' ? amount : 50
+          const samples = 44100
+          const curve = new Float32Array(samples)
+          const deg = Math.PI / 180
+
+          for (let i = 0; i < samples; ++i) {
+            const x = (i * 2) / samples - 1
+            curve[i] = (3 + k) * x * 20 * deg / (Math.PI + k * Math.abs(x))
+          }
+          return curve
+        }
+        distortion.curve = makeDistortionCurve(100)
+
+        // Connect oscillator and noise
+        nitroOscillator.connect(distortion)
+        distortion.connect(nitroGainNode)
+        noiseSource.connect(nitroFilter)
+        nitroFilter.connect(nitroGainNode)
+
+        // Start with fade-in
+        nitroGainNode.gain.setValueAtTime(0, audioContext.currentTime)
+        nitroGainNode.gain.linearRampToValueAtTime(0.2, audioContext.currentTime + 0.1)
+
+        // Start sound
+        nitroOscillator.start()
+        noiseSource.start()
+
+        // Schedule noise end
+        noiseSource.onended = () => {
+          // Keep oscillator running as long as nitro is active
+        }
+      }
+    }
+
+    // Stop nitro sound
+    function stopNitroSound() {
+      if (isNitroSoundPlaying) {
+        // Fade out
+        nitroGainNode.gain.setValueAtTime(nitroGainNode.gain.value, audioContext.currentTime)
+        nitroGainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.2)
+
+        // Stop after fade-out
+        setTimeout(() => {
+          if (nitroOscillator) {
+            nitroOscillator.stop()
+            isNitroSoundPlaying = false
+          }
+        }, 200)
+      }
+    }
+
+    // Create exhaust particle for nitro effect
+    function createExhaustParticle() {
+      // Get the car's position and rotation
+      const carDirection = new THREE.Vector3(
+        -Math.sin(playerCar.rotation.y),
+        0,
+        -Math.cos(playerCar.rotation.y)
+      )
+
+      // Position particles at the back of the car
+      const exhaustPosOffset = new THREE.Vector3(
+        playerCar.position.x + (carDirection.x * 1.1),
+        playerCar.position.y + 0.22, // Just above the car's bottom
+        playerCar.position.z + (carDirection.z * 1.1)
+      )
+
+      // Randomize position slightly
+      const randomOffset = 0.15
+      exhaustPosOffset.x += (Math.random() - 0.5) * randomOffset
+      exhaustPosOffset.y += (Math.random() - 0.5) * randomOffset
+      exhaustPosOffset.z += (Math.random() - 0.5) * randomOffset
+
+      // Create particle
+      const particleGeometry = new THREE.SphereGeometry(0.1, 8, 8)
+
+      // Color for nitro - blue/purple flames
+      let particleColor
+      const colorRand = Math.random()
+      if (colorRand < 0.3) {
+        particleColor = 0x7275ff // Blue
+      } else if (colorRand < 0.6) {
+        particleColor = 0xb967ff // Purple
+      } else {
+        particleColor = 0x54feff // Cyan
+      }
+
+      const particleMaterial = new THREE.MeshBasicMaterial({
+        color: particleColor,
+        transparent: true,
+        opacity: 0.9
+      })
+
+      const particle = new THREE.Mesh(particleGeometry, particleMaterial)
+      particle.position.copy(exhaustPosOffset)
+
+      // Add velocity with some randomization
+      const velocity = new THREE.Vector3(
+        carDirection.x * (0.1 + Math.random() * 0.1),
+        0.05 + Math.random() * 0.05, // Up
+        carDirection.z * (0.1 + Math.random() * 0.1)
+      )
+
+      // Store particle data
+      const exhaustParticle = {
+        mesh: particle,
+        velocity: velocity,
+        life: 20 + Math.floor(Math.random() * 10) // Random lifespan (frames)
+      }
+
+      scene.add(particle)
+      exhaustParticles.push(exhaustParticle)
+    }
+
+    // Update exhaust particles
+    function updateExhaustParticles() {
+      // Add new particles when nitro is active
+      if (nitroActive && playerSpeed > 0.05) {
+        // Spawn particles at a rate based on speed
+        if (Math.random() < 0.3 + (playerSpeed / maxSpeed) * 0.4) {
+          createExhaustParticle()
+        }
+      }
+
+      // Update existing particles
+      for (let i = exhaustParticles.length - 1; i >= 0; i--) {
+        const particle = exhaustParticles[i]
+
+        // Move particle
+        particle.mesh.position.add(particle.velocity)
+
+        // Scale down particle as it ages
+        const lifeRatio = particle.life / 30
+        particle.mesh.scale.set(lifeRatio, lifeRatio, lifeRatio)
+
+        // Fade out
+        if (particle.mesh.material.opacity > 0) {
+          particle.mesh.material.opacity = Math.max(0, lifeRatio)
+        }
+
+        // Decrease life
+        particle.life--
+
+        // Remove dead particles
+        if (particle.life <= 0) {
+          scene.remove(particle.mesh)
+          exhaustParticles.splice(i, 1)
+        }
+      }
+    }
+
     // Camera setup
     const camera = new THREE.PerspectiveCamera(
       75,
@@ -434,7 +627,8 @@ export default function DrivingSimulation () {
       a: false,
       s: false,
       d: false,
-      space: false
+      space: false,
+      n: false  // Add nitro key
     }
 
     // Player car variables
@@ -459,6 +653,12 @@ export default function DrivingSimulation () {
     let collisionCooldown = 0
     let playerHealth = 100
     let damageIndicatorTime = 0
+    // Add nitro variables
+    let nitroActive = false
+    let nitroFuel = 100
+    let nitroRecoveryTime = 0
+    let nitroBoostMultiplier = 2.0
+    let exhaustParticles = []
 
     // Event listeners for keyboard controls
     const handleKeyDown = e => {
@@ -478,6 +678,14 @@ export default function DrivingSimulation () {
       if (e.key === 'h' || e.key === 'H') {
         playHornSound()
       }
+      // Add nitro functionality when 'n' is pressed
+      if (e.key === 'n' || e.key === 'N') {
+        keyState.n = true
+        if (nitroFuel > 0 && !nitroActive) {
+          nitroActive = true
+          playNitroSound()
+        }
+      }
     }
 
     const handleKeyUp = e => {
@@ -488,6 +696,11 @@ export default function DrivingSimulation () {
       if (e.key === ' ') {
         keyState.space = false
         stopBrakeSound()
+      }
+      if (e.key === 'n' || e.key === 'N') {
+        keyState.n = false
+        nitroActive = false
+        stopNitroSound()
       }
     }
 
@@ -1552,7 +1765,7 @@ export default function DrivingSimulation () {
     speedometerDiv.style.fontSize = '16px'
     speedometerDiv.style.zIndex = '1000'
     speedometerDiv.innerHTML =
-      'Speed: 0 km/h<br>Distance: 0.0 km<br>Health: 100%'
+      'Speed: 0 km/h<br>Distance: 0.0 km<br>Health: 100%<br>Nitro: 100%'
     document.body.appendChild(speedometerDiv)
 
     // Create damage indicator overlay
@@ -1938,19 +2151,57 @@ export default function DrivingSimulation () {
 
       // Handle player car controls (only if not currently in a collision)
       if (!isColliding) {
-        if (keyState.w) {
-          // Accelerate forward
-          playerSpeed = Math.min(playerSpeed + acceleration, maxSpeed)
-        } else if (keyState.s) {
-          // Accelerate backward
-          playerSpeed = Math.max(playerSpeed - acceleration, -maxSpeed / 1.5)
-        } else {
-          // Natural deceleration when not pressing forward/backward
-          if (playerSpeed > 0) {
-            playerSpeed = Math.max(playerSpeed - deceleration, 0)
-          } else if (playerSpeed < 0) {
-            playerSpeed = Math.min(playerSpeed + deceleration, 0)
+        // Apply nitro boost if active and has fuel
+        if (keyState.n && nitroActive && nitroFuel > 0) {
+          // Boost forward acceleration when nitro is active
+          if (keyState.w) {
+            playerSpeed = Math.min(
+              playerSpeed + acceleration * nitroBoostMultiplier,
+              maxSpeed * nitroBoostMultiplier
+            )
+            // Consume nitro fuel
+            nitroFuel = Math.max(0, nitroFuel - 0.5)
+          } else {
+            // Nitro doesn't work when not accelerating
+            nitroActive = false
+            stopNitroSound()
           }
+        } else {
+          // Normal acceleration without nitro
+          if (keyState.w) {
+            // Accelerate forward
+            playerSpeed = Math.min(playerSpeed + acceleration, maxSpeed)
+          } else if (keyState.s) {
+            // Accelerate backward
+            playerSpeed = Math.max(playerSpeed - acceleration, -maxSpeed / 1.5)
+          } else {
+            // Natural deceleration when not pressing forward/backward
+            if (playerSpeed > 0) {
+              playerSpeed = Math.max(playerSpeed - deceleration, 0)
+            } else if (playerSpeed < 0) {
+              playerSpeed = Math.min(playerSpeed + deceleration, 0)
+            }
+          }
+        }
+
+        // If nitro was active but ran out of fuel, deactivate it
+        if (nitroActive && nitroFuel <= 0) {
+          nitroActive = false
+          stopNitroSound()
+        }
+
+        // Gradually replenish nitro fuel when not using it
+        if (!nitroActive) {
+          if (nitroRecoveryTime <= 0) {
+            // Start recovery after a delay
+            nitroFuel = Math.min(100, nitroFuel + 0.1)
+          } else {
+            // Countdown recovery delay
+            nitroRecoveryTime--
+          }
+        } else {
+          // Set recovery delay when nitro is deactivated
+          nitroRecoveryTime = 60
         }
       }
 
@@ -1970,12 +2221,19 @@ export default function DrivingSimulation () {
         totalDistanceKm += distanceThisFrame
       }
 
-      // Update speedometer display with health
+      // Update speedometer display with health and nitro
       speedometerDiv.innerHTML = `Speed: ${Math.round(
         speedKmh
       )} km/h<br>Distance: ${totalDistanceKm.toFixed(
         2
-      )} km<br>Health: ${playerHealth}%`
+      )} km<br>Health: ${playerHealth}%<br>Nitro: ${Math.round(nitroFuel)}%`
+
+      // Add visual indication when nitro is active
+      if (nitroActive) {
+        speedometerDiv.style.boxShadow = '0 0 15px #54feff'
+      } else {
+        speedometerDiv.style.boxShadow = 'none'
+      }
 
       // Smooth turning implementation
       // Higher speeds = slower turning (more realistic)
@@ -2359,6 +2617,9 @@ export default function DrivingSimulation () {
         // Update rotation to match direction
         person.mesh.rotation.y = person.direction
       })
+
+      // Update exhaust particles
+      updateExhaustParticles()
 
       // Don't call controls.update() since we disabled orbit controls
       renderer.render(scene, camera)
