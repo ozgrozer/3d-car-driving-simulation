@@ -188,161 +188,133 @@ export default function DrivingSimulation () {
     }
 
     // Play collision sound with different characteristics based on collision type
-    function playCollisionSound(collisionType, impactForce) {
+    function playCollisionSound (collisionType, impactForce) {
       if (!audioContext) initAudio()
 
       if (!isCollisionSoundPlaying) {
         isCollisionSoundPlaying = true
 
         // Scale impact force to 0-1 range for sound modulation
-        const normalizedImpact = Math.min(1, impactForce / 80);
+        const normalizedImpact = Math.min(1, impactForce / 80)
 
         // Create collision sound based on type
-        const bufferSize = audioContext.sampleRate * 0.5; // Increased from 0.3 to 0.5s
-        const buffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
-        const data = buffer.getChannelData(0);
+        const bufferSize = audioContext.sampleRate * 0.5 // Increased from 0.3 to 0.5s
+        const buffer = audioContext.createBuffer(
+          1,
+          bufferSize,
+          audioContext.sampleRate
+        )
+        const data = buffer.getChannelData(0)
 
         // Fill buffer with different sound patterns based on collision type
-        if (collisionType === 'building') {
+        if (collisionType === 'building' || collisionType === 'car') {
           // Heavy, low-frequency impact for buildings with initial loud crash
-          const attackTime = bufferSize * 0.05; // Short attack
-          const decayStart = bufferSize * 0.2;
+          const attackTime = bufferSize * 0.05 // Short attack
+          const decayStart = bufferSize * 0.2
 
           for (let i = 0; i < bufferSize; i++) {
             // Initial high amplitude impact followed by decay and rumble
             if (i < attackTime) {
               // Sharp attack
-              data[i] = (Math.random() * 2 - 1) * (i / attackTime) * 1.5;
+              data[i] = (Math.random() * 2 - 1) * (i / attackTime) * 1.5
             } else if (i < decayStart) {
               // Sustained crash
-              data[i] = (Math.random() * 2 - 1) * 1.2 * Math.pow(1 - ((i - attackTime) / (decayStart - attackTime)), 0.5);
+              data[i] =
+                (Math.random() * 2 - 1) *
+                1.2 *
+                Math.pow(1 - (i - attackTime) / (decayStart - attackTime), 0.5)
             } else {
               // Decay and rumble - with multiple frequency components
-              const decay = Math.pow(1 - ((i - decayStart) / (bufferSize - decayStart)), 2);
-              const rumble = Math.sin(i * 0.02) * 0.3 + Math.sin(i * 0.01) * 0.2;
-              data[i] = (Math.random() * 2 - 1) * decay * 0.8 + rumble * decay;
-            }
-          }
-        } else if (collisionType === 'car') {
-          // Metallic crash for cars with distinct metal crunch sounds
-          const attackTime = bufferSize * 0.02;
-          const crunchTime = bufferSize * 0.3;
-
-          for (let i = 0; i < bufferSize; i++) {
-            if (i < attackTime) {
-              // Initial impact
-              data[i] = (Math.random() * 2 - 1) * (i / attackTime) * 1.4;
-            } else if (i < crunchTime) {
-              // Metal crunching with multiple resonant peaks
-              const baseNoise = (Math.random() * 2 - 1);
-              const crunch = Math.sin(i * 0.4) * Math.sin(i * 0.1) * 0.4;
-              const envelope = Math.pow(1 - ((i - attackTime) / (crunchTime - attackTime)), 1.2);
-              data[i] = baseNoise * envelope + crunch * envelope;
-
-              // Add metallic resonance - more pronounced at higher impact forces
-              if (i % 100 < 50 * normalizedImpact) {
-                data[i] *= 1.5;
-              }
-            } else {
-              // Decaying metal sounds
-              const decay = Math.pow(1 - ((i - crunchTime) / (bufferSize - crunchTime)), 3);
-              const resonance = (Math.sin(i * 0.1) * 0.5 + Math.sin(i * 0.3) * 0.3) * 0.5;
-              data[i] = ((Math.random() * 2 - 1) * 0.3 + resonance) * decay;
+              const decay = Math.pow(
+                1 - (i - decayStart) / (bufferSize - decayStart),
+                2
+              )
+              const rumble = Math.sin(i * 0.02) * 0.3 + Math.sin(i * 0.01) * 0.2
+              data[i] = (Math.random() * 2 - 1) * decay * 0.8 + rumble * decay
             }
           }
         } else if (collisionType === 'person') {
           // Softer thud for people with more organic quality
           for (let i = 0; i < bufferSize; i++) {
             // More organic, soft thud with initial impact
-            const phase = i / bufferSize;
-            const envelope = Math.pow(1 - phase, 3);
+            const phase = i / bufferSize
+            const envelope = Math.pow(1 - phase, 3)
 
             // Combine softer noise with low-frequency oscillation
-            const thud = Math.sin(i * 0.03) * 0.7 + Math.sin(i * 0.02) * 0.3;
-            data[i] = ((Math.random() * 2 - 1) * 0.4 + thud * 0.6) * envelope;
+            const thud = Math.sin(i * 0.03) * 0.7 + Math.sin(i * 0.02) * 0.3
+            data[i] = ((Math.random() * 2 - 1) * 0.4 + thud * 0.6) * envelope
 
             // Additional impact variation based on speed
             if (i < bufferSize * 0.1) {
-              data[i] *= 1 + normalizedImpact;
+              data[i] *= 1 + normalizedImpact
             }
           }
         }
 
         // Create and configure sound source
-        const collisionSource = audioContext.createBufferSource();
-        collisionSource.buffer = buffer;
+        const collisionSource = audioContext.createBufferSource()
+        collisionSource.buffer = buffer
 
         // Create filters based on collision type
-        const filter = audioContext.createBiquadFilter();
+        const filter = audioContext.createBiquadFilter()
 
-        if (collisionType === 'building') {
-          filter.type = 'lowpass';
-          filter.frequency.value = 400;
-          filter.Q.value = 2;
+        if (collisionType === 'building' || collisionType === 'car') {
+          filter.type = 'lowpass'
+          filter.frequency.value = 400
+          filter.Q.value = 2
 
           // Add distortion for heavy impacts
           if (normalizedImpact > 0.7) {
-            const distortion = audioContext.createWaveShaper();
-            const curve = new Float32Array(44100);
+            const distortion = audioContext.createWaveShaper()
+            const curve = new Float32Array(44100)
             for (let i = 0; i < 44100; i++) {
-              const x = i * 2 / 44100 - 1;
-              curve[i] = Math.sign(x) * Math.pow(Math.abs(x), 0.5) * 3;
+              const x = (i * 2) / 44100 - 1
+              curve[i] = Math.sign(x) * Math.pow(Math.abs(x), 0.5) * 3
             }
-            distortion.curve = curve;
-            distortion.oversample = '4x';
+            distortion.curve = curve
+            distortion.oversample = '4x'
 
-            collisionSource.connect(distortion);
-            distortion.connect(filter);
+            collisionSource.connect(distortion)
+            distortion.connect(filter)
           } else {
-            collisionSource.connect(filter);
+            collisionSource.connect(filter)
           }
-        } else if (collisionType === 'car') {
-          // Dual filter approach for car crashes
-          const highFilter = audioContext.createBiquadFilter();
-          highFilter.type = 'highpass';
-          highFilter.frequency.value = 2000;
-          highFilter.Q.value = 3;
-
-          filter.type = 'bandpass';
-          filter.frequency.value = 800 + normalizedImpact * 1000; // Higher freq for harder impacts
-          filter.Q.value = 4;
-
-          const gainHigh = audioContext.createGain();
-          gainHigh.gain.value = 0.3;
-
-          // Split the signal path for better crash sound
-          collisionSource.connect(filter);
-          collisionSource.connect(highFilter);
-          highFilter.connect(gainHigh);
-          gainHigh.connect(collisionGainNode);
         } else if (collisionType === 'person') {
-          filter.type = 'lowpass';
-          filter.frequency.value = 800;
-          filter.Q.value = 1;
+          filter.type = 'lowpass'
+          filter.frequency.value = 800
+          filter.Q.value = 1
 
-          collisionSource.connect(filter);
+          collisionSource.connect(filter)
         }
 
         // Connect source -> filter -> gain -> output
-        filter.connect(collisionGainNode);
+        filter.connect(collisionGainNode)
 
         // Set gain based on collision type and impact
-        const baseVolume = collisionType === 'building' ? 0.3 :
-                        collisionType === 'car' ? 0.25 : 0.15;
-        const volume = baseVolume + normalizedImpact * 0.2;
+        const baseVolume = collisionType === 'person' ? 0.15 : 0.3
+        const volume = baseVolume + normalizedImpact * 0.2
 
-        collisionGainNode.gain.setValueAtTime(0, audioContext.currentTime);
-        collisionGainNode.gain.linearRampToValueAtTime(volume, audioContext.currentTime + 0.01);
+        collisionGainNode.gain.setValueAtTime(0, audioContext.currentTime)
+        collisionGainNode.gain.linearRampToValueAtTime(
+          volume,
+          audioContext.currentTime + 0.01
+        )
 
         // Add small fade-out at the end
-        collisionGainNode.gain.setValueAtTime(volume, audioContext.currentTime + buffer.duration - 0.1);
-        collisionGainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + buffer.duration);
+        collisionGainNode.gain.setValueAtTime(
+          volume,
+          audioContext.currentTime + buffer.duration - 0.1
+        )
+        collisionGainNode.gain.exponentialRampToValueAtTime(
+          0.001,
+          audioContext.currentTime + buffer.duration
+        )
 
         // Start and schedule stop
-        collisionSource.start();
+        collisionSource.start()
         collisionSource.onended = () => {
-          isCollisionSoundPlaying = false;
-        };
+          isCollisionSoundPlaying = false
+        }
       }
     }
 
@@ -474,7 +446,7 @@ export default function DrivingSimulation () {
     const citySize = gridSize * (blockSize + streetWidth)
 
     // Create array to store building collision boxes
-    const buildingBoxes = [];
+    const buildingBoxes = []
 
     // Create buildings
     function createBuilding (x, z, width, depth, height) {
@@ -604,8 +576,8 @@ export default function DrivingSimulation () {
         width: width,
         depth: depth,
         mesh: building
-      };
-      buildingBoxes.push(buildingBox);
+      }
+      buildingBoxes.push(buildingBox)
     }
 
     // Create city blocks with buildings
@@ -976,7 +948,7 @@ export default function DrivingSimulation () {
     }
 
     // Create bus - larger vehicle with different appearance
-    function createBus(x, z, direction) {
+    function createBus (x, z, direction) {
       const busGroup = new THREE.Group()
 
       // Bus body - larger and taller than cars
@@ -1186,7 +1158,8 @@ export default function DrivingSimulation () {
 
     // Add buses to roads - Add this code after the existing car creation loop
     const buses = []
-    for (let i = 0; i < 25; i++) { // Add 25 buses to the city
+    for (let i = 0; i < 25; i++) {
+      // Add 25 buses to the city
       let x, z, direction, movingDirection
 
       if (Math.random() > 0.5) {
@@ -1194,14 +1167,22 @@ export default function DrivingSimulation () {
         direction = 'horizontal'
         movingDirection = Math.random() > 0.5 ? 1 : -1 // Random direction
         const roadIndex = Math.floor(Math.random() * (gridSize + 1))
-        z = roadIndex * (blockSize + streetWidth) - citySize / 2 - streetWidth / 2 + streetWidth / 2
+        z =
+          roadIndex * (blockSize + streetWidth) -
+          citySize / 2 -
+          streetWidth / 2 +
+          streetWidth / 2
         x = (Math.random() - 0.5) * citySize
       } else {
         // Vertical road
         direction = 'vertical'
         movingDirection = Math.random() > 0.5 ? 1 : -1 // Random direction
         const roadIndex = Math.floor(Math.random() * (gridSize + 1))
-        x = roadIndex * (blockSize + streetWidth) - citySize / 2 - streetWidth / 2 + streetWidth / 2
+        x =
+          roadIndex * (blockSize + streetWidth) -
+          citySize / 2 -
+          streetWidth / 2 +
+          streetWidth / 2
         z = (Math.random() - 0.5) * citySize
       }
 
@@ -1466,7 +1447,8 @@ export default function DrivingSimulation () {
     speedometerDiv.style.fontFamily = 'Arial, sans-serif'
     speedometerDiv.style.fontSize = '16px'
     speedometerDiv.style.zIndex = '1000'
-    speedometerDiv.innerHTML = 'Speed: 0 km/h<br>Distance: 0.0 km<br>Health: 100%'
+    speedometerDiv.innerHTML =
+      'Speed: 0 km/h<br>Distance: 0.0 km<br>Health: 100%'
     document.body.appendChild(speedometerDiv)
 
     // Create damage indicator overlay
@@ -1483,15 +1465,15 @@ export default function DrivingSimulation () {
     document.body.appendChild(damageIndicator)
 
     // Check for collisions between player car and other objects
-    function checkCollisions() {
+    function checkCollisions () {
       // Reset collision flag
-      const wasColliding = isColliding;
-      isColliding = false;
+      const wasColliding = isColliding
+      isColliding = false
 
       // Don't check during cooldown
       if (collisionCooldown > 0) {
-        collisionCooldown--;
-        return;
+        collisionCooldown--
+        return
       }
 
       // Get car's forward direction vector based on its rotation
@@ -1499,169 +1481,203 @@ export default function DrivingSimulation () {
         Math.sin(playerCar.rotation.y),
         0,
         Math.cos(playerCar.rotation.y)
-      );
+      )
 
       // Create more accurate oriented bounding box for player car
-      const carLength = 2.0;
-      const carWidth = 1.0;
+      const carLength = 2.0
+      const carWidth = 1.0
       const carFront = new THREE.Vector3(
-        playerCar.position.x + carDirection.x * (carLength/2 - 0.2),
+        playerCar.position.x + carDirection.x * (carLength / 2 - 0.2),
         0,
-        playerCar.position.z + carDirection.z * (carLength/2 - 0.2)
-      );
+        playerCar.position.z + carDirection.z * (carLength / 2 - 0.2)
+      )
       const carBack = new THREE.Vector3(
-        playerCar.position.x - carDirection.x * (carLength/2 - 0.2),
+        playerCar.position.x - carDirection.x * (carLength / 2 - 0.2),
         0,
-        playerCar.position.z - carDirection.z * (carLength/2 - 0.2)
-      );
+        playerCar.position.z - carDirection.z * (carLength / 2 - 0.2)
+      )
 
       // Get perpendicular direction for car width
-      const perpDirection = new THREE.Vector3(-carDirection.z, 0, carDirection.x);
+      const perpDirection = new THREE.Vector3(
+        -carDirection.z,
+        0,
+        carDirection.x
+      )
 
       // Create 4 corners of car's bounding box
       const frontLeft = new THREE.Vector3(
-        carFront.x + perpDirection.x * carWidth/2,
+        carFront.x + (perpDirection.x * carWidth) / 2,
         0,
-        carFront.z + perpDirection.z * carWidth/2
-      );
+        carFront.z + (perpDirection.z * carWidth) / 2
+      )
       const frontRight = new THREE.Vector3(
-        carFront.x - perpDirection.x * carWidth/2,
+        carFront.x - (perpDirection.x * carWidth) / 2,
         0,
-        carFront.z - perpDirection.z * carWidth/2
-      );
+        carFront.z - (perpDirection.z * carWidth) / 2
+      )
       const backLeft = new THREE.Vector3(
-        carBack.x + perpDirection.x * carWidth/2,
+        carBack.x + (perpDirection.x * carWidth) / 2,
         0,
-        carBack.z + perpDirection.z * carWidth/2
-      );
+        carBack.z + (perpDirection.z * carWidth) / 2
+      )
       const backRight = new THREE.Vector3(
-        carBack.x - perpDirection.x * carWidth/2,
+        carBack.x - (perpDirection.x * carWidth) / 2,
         0,
-        carBack.z - perpDirection.z * carWidth/2
-      );
+        carBack.z - (perpDirection.z * carWidth) / 2
+      )
 
       // Create points to check for collision
       const checkPoints = [
-        frontLeft, frontRight, // Front corners
+        frontLeft,
+        frontRight, // Front corners
         new THREE.Vector3(carFront.x, 0, carFront.z), // Front center
-        backLeft, backRight, // Back corners
+        backLeft,
+        backRight, // Back corners
         new THREE.Vector3(carBack.x, 0, carBack.z), // Back center
         new THREE.Vector3( // Left middle
-          playerCar.position.x + perpDirection.x * carWidth/2,
+          playerCar.position.x + (perpDirection.x * carWidth) / 2,
           0,
-          playerCar.position.z + perpDirection.z * carWidth/2
+          playerCar.position.z + (perpDirection.z * carWidth) / 2
         ),
         new THREE.Vector3( // Right middle
-          playerCar.position.x - perpDirection.x * carWidth/2,
+          playerCar.position.x - (perpDirection.x * carWidth) / 2,
           0,
-          playerCar.position.z - perpDirection.z * carWidth/2
+          playerCar.position.z - (perpDirection.z * carWidth) / 2
         )
-      ];
+      ]
 
       // Check collision with buildings
       for (let i = 0; i < buildingBoxes.length; i++) {
-        const building = buildingBoxes[i];
+        const building = buildingBoxes[i]
         const buildingBox = {
           minX: building.x - building.width / 2,
           maxX: building.x + building.width / 2,
           minZ: building.z - building.depth / 2,
           maxZ: building.z + building.depth / 2
-        };
+        }
 
         // Check if any of the car's points are inside the building
         for (const point of checkPoints) {
-          if (point.x >= buildingBox.minX && point.x <= buildingBox.maxX &&
-              point.z >= buildingBox.minZ && point.z <= buildingBox.maxZ) {
-            handleCollision('building', building);
-            return; // Exit after handling one collision
+          if (
+            point.x >= buildingBox.minX &&
+            point.x <= buildingBox.maxX &&
+            point.z >= buildingBox.minZ &&
+            point.z <= buildingBox.maxZ
+          ) {
+            handleCollision('building', building)
+            return // Exit after handling one collision
           }
         }
       }
 
       // Check collision with AI cars
       for (let i = 0; i < cars.length; i++) {
-        const car = cars[i];
-        const carRadius = car.isBus ? 1.6 : 0.8;
+        const car = cars[i]
+        const carRadius = car.isBus ? 1.6 : 0.8
 
         // Get car direction vector
-        let aiCarDirection;
+        let aiCarDirection
         if (car.direction === 'horizontal') {
-          aiCarDirection = new THREE.Vector3(car.speed > 0 ? 1 : -1, 0, 0);
+          aiCarDirection = new THREE.Vector3(car.speed > 0 ? 1 : -1, 0, 0)
         } else {
-          aiCarDirection = new THREE.Vector3(0, 0, car.speed > 0 ? 1 : -1);
+          aiCarDirection = new THREE.Vector3(0, 0, car.speed > 0 ? 1 : -1)
         }
 
         // Create points for AI car collision
-        const aiCarLength = car.isBus ? 3.2 : 1.6;
-        const aiCarWidth = car.isBus ? 1.2 : 0.8;
+        const aiCarLength = car.isBus ? 3.2 : 1.6
+        const aiCarWidth = car.isBus ? 1.2 : 0.8
 
         // Get perpendicular direction for AI car width
-        const aiPerpDirection = new THREE.Vector3(-aiCarDirection.z, 0, aiCarDirection.x);
+        const aiPerpDirection = new THREE.Vector3(
+          -aiCarDirection.z,
+          0,
+          aiCarDirection.x
+        )
 
         // Create AI car bounding points
         const aiCarPoints = [
           new THREE.Vector3(
-            car.mesh.position.x + aiCarDirection.x * aiCarLength/2,
+            car.mesh.position.x + (aiCarDirection.x * aiCarLength) / 2,
             0,
-            car.mesh.position.z + aiCarDirection.z * aiCarLength/2
+            car.mesh.position.z + (aiCarDirection.z * aiCarLength) / 2
           ),
           new THREE.Vector3(
-            car.mesh.position.x - aiCarDirection.x * aiCarLength/2,
+            car.mesh.position.x - (aiCarDirection.x * aiCarLength) / 2,
             0,
-            car.mesh.position.z - aiCarDirection.z * aiCarLength/2
+            car.mesh.position.z - (aiCarDirection.z * aiCarLength) / 2
           ),
           new THREE.Vector3(
-            car.mesh.position.x + aiPerpDirection.x * aiCarWidth/2,
+            car.mesh.position.x + (aiPerpDirection.x * aiCarWidth) / 2,
             0,
-            car.mesh.position.z + aiPerpDirection.z * aiCarWidth/2
+            car.mesh.position.z + (aiPerpDirection.z * aiCarWidth) / 2
           ),
           new THREE.Vector3(
-            car.mesh.position.x - aiPerpDirection.x * aiCarWidth/2,
+            car.mesh.position.x - (aiPerpDirection.x * aiCarWidth) / 2,
             0,
-            car.mesh.position.z - aiPerpDirection.z * aiCarWidth/2
+            car.mesh.position.z - (aiPerpDirection.z * aiCarWidth) / 2
           )
-        ];
+        ]
 
         // Check for collision between player car points and AI car points
-        let hasCollision = false;
+        let hasCollision = false
 
         // Simple distance check first - optimization
-        if (new THREE.Vector3(
+        if (
+          new THREE.Vector3(
             playerCar.position.x - car.mesh.position.x,
             0,
             playerCar.position.z - car.mesh.position.z
-          ).length() < (carLength/2 + aiCarLength/2)) {
-
+          ).length() <
+          carLength / 2 + aiCarLength / 2
+        ) {
           // More detailed collision check
           for (const point of checkPoints) {
             // Check if any player car point is within the AI car's bounding box
-            if (isPointInRectangle(point, car.mesh.position, aiCarDirection, aiPerpDirection, aiCarLength, aiCarWidth)) {
-              hasCollision = true;
-              break;
+            if (
+              isPointInRectangle(
+                point,
+                car.mesh.position,
+                aiCarDirection,
+                aiPerpDirection,
+                aiCarLength,
+                aiCarWidth
+              )
+            ) {
+              hasCollision = true
+              break
             }
           }
 
           // Also check if any AI car point is inside player car's bounding box
           if (!hasCollision) {
             for (const point of aiCarPoints) {
-              if (isPointInRectangle(point, playerCar.position, carDirection, perpDirection, carLength, carWidth)) {
-                hasCollision = true;
-                break;
+              if (
+                isPointInRectangle(
+                  point,
+                  playerCar.position,
+                  carDirection,
+                  perpDirection,
+                  carLength,
+                  carWidth
+                )
+              ) {
+                hasCollision = true
+                break
               }
             }
           }
 
           if (hasCollision) {
-            handleCollision('car', car);
-            return;
+            handleCollision('car', car)
+            return
           }
         }
       }
 
       // Check collision with people
       for (let i = 0; i < people.length; i++) {
-        const person = people[i];
-        const personRadius = 0.2;
+        const person = people[i]
+        const personRadius = 0.2
 
         // Simple distance check for people (they're small so a sphere is sufficient)
         for (const point of checkPoints) {
@@ -1669,131 +1685,131 @@ export default function DrivingSimulation () {
             point.x - person.mesh.position.x,
             0,
             point.z - person.mesh.position.z
-          ).length();
+          ).length()
 
           if (distance < personRadius + 0.2) {
-            handleCollision('person', person);
-            return;
+            handleCollision('person', person)
+            return
           }
         }
       }
     }
 
     // Helper function to check if a point is inside an oriented rectangle
-    function isPointInRectangle(point, center, dirX, dirY, length, width) {
+    function isPointInRectangle (point, center, dirX, dirY, length, width) {
       // Vector from center to point
       const toPoint = new THREE.Vector3(
         point.x - center.x,
         0,
         point.z - center.z
-      );
+      )
 
       // Project toPoint onto the rectangle's axes
-      const projX = toPoint.dot(dirX);
-      const projY = toPoint.dot(dirY);
+      const projX = toPoint.dot(dirX)
+      const projY = toPoint.dot(dirY)
 
       // Check if projection falls within rectangle bounds
-      return Math.abs(projX) <= length/2 && Math.abs(projY) <= width/2;
+      return Math.abs(projX) <= length / 2 && Math.abs(projY) <= width / 2
     }
 
     // Handle collision response
-    function handleCollision(type, object) {
+    function handleCollision (type, object) {
       // Set collision flags
-      isColliding = true;
-      collisionCooldown = 15; // Frames before checking collisions again
+      isColliding = true
+      collisionCooldown = 15 // Frames before checking collisions again
 
       // Calculate collision speed impact
-      const impactForce = Math.abs(playerSpeed) * 300;
+      const impactForce = Math.abs(playerSpeed) * 300
 
       // Play appropriate sound with impact force parameter
-      playCollisionSound(type, impactForce);
+      playCollisionSound(type, impactForce)
 
       // Apply damage based on type and speed
-      let damageAmount = 0;
+      let damageAmount = 0
 
       if (type === 'building') {
         // Buildings cause the most damage
-        damageAmount = Math.min(Math.floor(impactForce * 1.5), 40);
+        damageAmount = Math.min(Math.floor(impactForce * 1.5), 40)
 
         // Reduce player speed significantly
-        playerSpeed *= -0.3; // Bounce back
-      }
-      else if (type === 'car') {
+        playerSpeed *= -0.3 // Bounce back
+      } else if (type === 'car') {
         // Cars cause moderate damage
-        damageAmount = Math.min(Math.floor(impactForce), 25);
+        damageAmount = Math.min(Math.floor(impactForce), 25)
 
         // Calculate relative motion of the two vehicles
         // Assume collision is most severe when vehicles are moving in opposite directions
-        const carSpeed = object.speed;
-        const relativeSpeed = Math.abs(playerSpeed) + Math.abs(carSpeed);
+        const carSpeed = object.speed
+        const relativeSpeed = Math.abs(playerSpeed) + Math.abs(carSpeed)
 
         // Adjust damage based on relative speed
-        damageAmount = Math.min(Math.floor(relativeSpeed * 120), 35);
+        damageAmount = Math.min(Math.floor(relativeSpeed * 120), 35)
 
         // Reduce player speed based on relative masses and directions
-        const playerMass = 1.0;
-        const carMass = object.isBus ? 2.5 : 0.8;
-        const massRatio = playerMass / (playerMass + carMass);
+        const playerMass = 1.0
+        const carMass = object.isBus ? 2.5 : 0.8
+        const massRatio = playerMass / (playerMass + carMass)
 
         // More realistic collision physics
-        playerSpeed *= -0.4 * (1 - massRatio); // More bounce from heavier vehicles
+        playerSpeed *= -0.4 * (1 - massRatio) // More bounce from heavier vehicles
 
         // Also move the AI car in response to collision
         if (Math.abs(playerSpeed) > 0.1) {
           // Only affect AI car if player is moving fast enough
-          const pushFactor = Math.min(Math.abs(playerSpeed) * 0.8, 0.2);
+          const pushFactor = Math.min(Math.abs(playerSpeed) * 0.8, 0.2)
 
           if (object.direction === 'horizontal') {
-            object.mesh.position.x += Math.sin(playerCar.rotation.y) * pushFactor;
+            object.mesh.position.x +=
+              Math.sin(playerCar.rotation.y) * pushFactor
           } else {
-            object.mesh.position.z += Math.cos(playerCar.rotation.y) * pushFactor;
+            object.mesh.position.z +=
+              Math.cos(playerCar.rotation.y) * pushFactor
           }
         }
-      }
-      else if (type === 'person') {
+      } else if (type === 'person') {
         // People cause less damage
-        damageAmount = Math.min(Math.floor(impactForce * 0.5), 15);
+        damageAmount = Math.min(Math.floor(impactForce * 0.5), 15)
 
         // Reduce player speed slightly
-        playerSpeed *= 0.7; // Slow down but don't reverse
+        playerSpeed *= 0.7 // Slow down but don't reverse
 
         // Move the person away from the car (knocked down effect)
         if (Math.abs(playerSpeed) > 0.05) {
-          const knockDistance = Math.min(Math.abs(playerSpeed) * 5, 2);
+          const knockDistance = Math.min(Math.abs(playerSpeed) * 5, 2)
           const knockDirection = new THREE.Vector3(
             Math.sin(playerCar.rotation.y),
             0,
             Math.cos(playerCar.rotation.y)
-          );
+          )
 
-          object.mesh.position.x += knockDirection.x * knockDistance;
-          object.mesh.position.z += knockDirection.z * knockDistance;
+          object.mesh.position.x += knockDirection.x * knockDistance
+          object.mesh.position.z += knockDirection.z * knockDistance
 
           // Make person lie down (rotate around x-axis)
-          object.mesh.rotation.x = Math.PI / 2;
+          object.mesh.rotation.x = Math.PI / 2
 
           // Slow down person after being hit
-          object.speed *= 0.2;
+          object.speed *= 0.2
         }
       }
 
       // Apply damage only if moving fast enough
       if (Math.abs(playerSpeed) > 0.05) {
-        playerHealth = Math.max(0, playerHealth - damageAmount);
+        playerHealth = Math.max(0, playerHealth - damageAmount)
 
         // Update damage indicator
         if (damageAmount > 0) {
-          damageIndicatorTime = 60; // Frames to show damage indicator
+          damageIndicatorTime = 60 // Frames to show damage indicator
 
           // Set indicator color based on damage amount
-          const opacity = Math.min(0.7, damageAmount / 40);
-          damageIndicator.style.backgroundColor = `rgba(255, 0, 0, ${opacity})`;
+          const opacity = Math.min(0.7, damageAmount / 40)
+          damageIndicator.style.backgroundColor = `rgba(255, 0, 0, ${opacity})`
         }
 
         // Add camera shake effect that scales with damage
-        camera.position.y += (Math.random() - 0.5) * damageAmount * 0.1;
-        camera.position.x += (Math.random() - 0.5) * damageAmount * 0.05;
-        camera.position.z += (Math.random() - 0.5) * damageAmount * 0.05;
+        camera.position.y += (Math.random() - 0.5) * damageAmount * 0.1
+        camera.position.x += (Math.random() - 0.5) * damageAmount * 0.05
+        camera.position.z += (Math.random() - 0.5) * damageAmount * 0.05
       }
     }
 
@@ -1806,13 +1822,13 @@ export default function DrivingSimulation () {
       window.requestAnimationFrame(animate)
 
       // Check for collisions
-      checkCollisions();
+      checkCollisions()
 
       // Update damage indicator
       if (damageIndicatorTime > 0) {
-        damageIndicatorTime--;
+        damageIndicatorTime--
         if (damageIndicatorTime === 0) {
-          damageIndicator.style.backgroundColor = 'rgba(255, 0, 0, 0)';
+          damageIndicator.style.backgroundColor = 'rgba(255, 0, 0, 0)'
         }
       }
 
@@ -1853,7 +1869,9 @@ export default function DrivingSimulation () {
       // Update speedometer display with health
       speedometerDiv.innerHTML = `Speed: ${Math.round(
         speedKmh
-      )} km/h<br>Distance: ${totalDistanceKm.toFixed(2)} km<br>Health: ${playerHealth}%`
+      )} km/h<br>Distance: ${totalDistanceKm.toFixed(
+        2
+      )} km<br>Health: ${playerHealth}%`
 
       // Smooth turning implementation
       // Higher speeds = slower turning (more realistic)
