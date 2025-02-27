@@ -24,6 +24,8 @@ export default function DrivingSimulation () {
     // Add collision sound variables
     let collisionGainNode
     let isCollisionSoundPlaying = false
+    // Add horn sound initialization if needed
+    let hornSound
 
     // Initialize audio context
     function initAudio () {
@@ -43,6 +45,9 @@ export default function DrivingSimulation () {
       collisionGainNode = audioContext.createGain()
       collisionGainNode.gain.value = 0
       collisionGainNode.connect(audioContext.destination)
+
+      // Add horn sound initialization if needed
+      hornSound = null;
     }
 
     // Create and start engine sound
@@ -318,6 +323,92 @@ export default function DrivingSimulation () {
       }
     }
 
+    function playHornSound() {
+        if (!audioContext) return;
+
+        // Stop any previous horn sound
+        if (hornSound) {
+            // Fix the error by properly checking if hornSound is an array
+            if (Array.isArray(hornSound)) {
+                hornSound.forEach(osc => {
+                    if (osc) osc.stop();
+                });
+            } else {
+                try {
+            hornSound.stop();
+                } catch (e) {
+                    console.log("Error stopping horn sound", e);
+                }
+            }
+        }
+
+        // Create a more complex horn sound with multiple oscillators
+        const hornGain = audioContext.createGain();
+        hornGain.gain.setValueAtTime(0.15, audioContext.currentTime);
+
+        // Create two oscillators for a richer horn sound
+        const osc1 = audioContext.createOscillator();
+        const osc2 = audioContext.createOscillator();
+
+        // Main horn tone (fundamental frequency)
+        osc1.type = 'square';
+        osc1.frequency.setValueAtTime(410, audioContext.currentTime); // Primary tone
+
+        // Secondary tone for harmonics
+        osc2.type = 'triangle';
+        osc2.frequency.setValueAtTime(480, audioContext.currentTime); // Harmonic
+
+        // Create a biquad filter for tone shaping
+        const filter = audioContext.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.setValueAtTime(800, audioContext.currentTime);
+        filter.Q.setValueAtTime(4, audioContext.currentTime);
+
+        // Create compressor for better dynamics
+        const compressor = audioContext.createDynamicsCompressor();
+        compressor.threshold.setValueAtTime(-12, audioContext.currentTime);
+        compressor.ratio.setValueAtTime(4, audioContext.currentTime);
+        compressor.attack.setValueAtTime(0.005, audioContext.currentTime);
+        compressor.release.setValueAtTime(0.1, audioContext.currentTime);
+
+        // Apply envelope to gain - shorter attack
+        hornGain.gain.setValueAtTime(0, audioContext.currentTime);
+        hornGain.gain.linearRampToValueAtTime(0.2, audioContext.currentTime + 0.03); // Quick attack
+        hornGain.gain.linearRampToValueAtTime(0.15, audioContext.currentTime + 0.08); // Slight decay
+
+        // Connect everything
+        osc1.connect(filter);
+        osc2.connect(filter);
+        filter.connect(compressor);
+        compressor.connect(hornGain);
+        hornGain.connect(audioContext.destination);
+
+        // Store reference to oscillators for cleanup
+        hornSound = [osc1, osc2];
+
+        // Start oscillators
+        osc1.start();
+        osc2.start();
+
+        // Set a timeout to stop the horn sound - SHORTER DURATION
+        setTimeout(() => {
+            if (hornSound) {
+                // Gentle fade out
+                hornGain.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.1);
+
+                // Actually stop the oscillators after fade out
+                setTimeout(() => {
+                    if (hornSound) {
+                        hornSound.forEach(osc => {
+                            if (osc) osc.stop();
+                        });
+                        hornSound = null;
+                    }
+                }, 100);
+            }
+        }, 250); // Horn plays for only 250ms plus 100ms fade (much shorter)
+    }
+
     // Camera setup
     const camera = new THREE.PerspectiveCamera(
       75,
@@ -373,6 +464,10 @@ export default function DrivingSimulation () {
       if (e.key === ' ') {
         keyState.space = true
         playBrakeSound()
+      }
+      // Add horn functionality when 'h' is pressed
+      if (e.key === 'h' || e.key === 'H') {
+        playHornSound();
       }
     }
 
@@ -2284,6 +2379,19 @@ export default function DrivingSimulation () {
       if (audioContext) {
         if (isEngineSoundPlaying) {
           engineOscillator.stop()
+        }
+        if (hornSound) {
+          if (Array.isArray(hornSound)) {
+            hornSound.forEach(osc => {
+              if (osc) osc.stop();
+            });
+          } else {
+            try {
+              hornSound.stop();
+            } catch (e) {
+              console.log("Error stopping horn sound", e);
+            }
+          }
         }
         audioContext.close()
       }
