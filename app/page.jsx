@@ -550,7 +550,7 @@ export default function DrivingSimulation () {
       scene.add(road)
 
       // Add pavements on both sides of horizontal roads
-      const pavementWidth = streetWidth * 0.3
+      const pavementWidth = streetWidth * 0.1
 
       // Left pavement
       const leftPavementGeometry = new THREE.PlaneGeometry(
@@ -626,7 +626,7 @@ export default function DrivingSimulation () {
       scene.add(road)
 
       // Add pavements on both sides of vertical roads
-      const pavementWidth = streetWidth * 0.3
+      const pavementWidth = streetWidth * 0.1
 
       // Top pavement
       const topPavementGeometry = new THREE.PlaneGeometry(
