@@ -531,6 +531,13 @@ export default function DrivingSimulation () {
       emissiveIntensity: 0.2
     })
 
+    // Add pavement material
+    const pavementMaterial = new THREE.MeshStandardMaterial({
+      color: 0xcccccc, // Light gray for pavement
+      roughness: 0.7,
+      metalness: 0.1
+    })
+
     // Horizontal roads
     for (let i = 0; i <= gridSize; i++) {
       const roadX =
@@ -541,6 +548,41 @@ export default function DrivingSimulation () {
       road.position.set(roadX + streetWidth / 2, 0.01, 0)
       road.receiveShadow = true
       scene.add(road)
+
+      // Add pavements on both sides of horizontal roads
+      const pavementWidth = streetWidth * 0.3
+
+      // Left pavement
+      const leftPavementGeometry = new THREE.PlaneGeometry(
+        pavementWidth,
+        citySize
+      )
+      const leftPavement = new THREE.Mesh(
+        leftPavementGeometry,
+        pavementMaterial
+      )
+      leftPavement.rotation.x = -Math.PI / 2
+      leftPavement.position.set(roadX - pavementWidth / 2, 0.05, 0) // Slightly elevated
+      leftPavement.receiveShadow = true
+      scene.add(leftPavement)
+
+      // Right pavement
+      const rightPavementGeometry = new THREE.PlaneGeometry(
+        pavementWidth,
+        citySize
+      )
+      const rightPavement = new THREE.Mesh(
+        rightPavementGeometry,
+        pavementMaterial
+      )
+      rightPavement.rotation.x = -Math.PI / 2
+      rightPavement.position.set(
+        roadX + streetWidth + pavementWidth / 2,
+        0.05,
+        0
+      ) // Slightly elevated
+      rightPavement.receiveShadow = true
+      scene.add(rightPavement)
 
       // Add white edge lines
       const leftEdgeGeometry = new THREE.PlaneGeometry(0.2, citySize)
@@ -582,6 +624,38 @@ export default function DrivingSimulation () {
       road.position.set(0, 0.01, roadZ + streetWidth / 2)
       road.receiveShadow = true
       scene.add(road)
+
+      // Add pavements on both sides of vertical roads
+      const pavementWidth = streetWidth * 0.3
+
+      // Top pavement
+      const topPavementGeometry = new THREE.PlaneGeometry(
+        citySize,
+        pavementWidth
+      )
+      const topPavement = new THREE.Mesh(topPavementGeometry, pavementMaterial)
+      topPavement.rotation.x = -Math.PI / 2
+      topPavement.position.set(0, 0.05, roadZ - pavementWidth / 2) // Slightly elevated
+      topPavement.receiveShadow = true
+      scene.add(topPavement)
+
+      // Bottom pavement
+      const bottomPavementGeometry = new THREE.PlaneGeometry(
+        citySize,
+        pavementWidth
+      )
+      const bottomPavement = new THREE.Mesh(
+        bottomPavementGeometry,
+        pavementMaterial
+      )
+      bottomPavement.rotation.x = -Math.PI / 2
+      bottomPavement.position.set(
+        0,
+        0.05,
+        roadZ + streetWidth + pavementWidth / 2
+      ) // Slightly elevated
+      bottomPavement.receiveShadow = true
+      scene.add(bottomPavement)
 
       // Add white edge lines
       const topEdgeGeometry = new THREE.PlaneGeometry(citySize, 0.2)
