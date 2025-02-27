@@ -234,10 +234,10 @@ export default function DrivingSimulation () {
     controls.dampingFactor = 0.05
 
     // Lighting
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5)
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6)
     scene.add(ambientLight)
 
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8)
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.9)
     directionalLight.position.set(50, 100, 50)
     directionalLight.castShadow = true
     directionalLight.shadow.mapSize.width = 2048
@@ -248,7 +248,15 @@ export default function DrivingSimulation () {
     directionalLight.shadow.camera.right = 150
     directionalLight.shadow.camera.top = 150
     directionalLight.shadow.camera.bottom = -150
+    directionalLight.shadow.bias = -0.0005
+    directionalLight.shadow.normalBias = 0.02
     scene.add(directionalLight)
+
+    // Add supplementary light to reduce harshness of shadows
+    const fillLight = new THREE.DirectionalLight(0xffffee, 0.4)
+    fillLight.position.set(-30, 80, -50)
+    fillLight.castShadow = false
+    scene.add(fillLight)
 
     // Ground
     const groundGeometry = new THREE.PlaneGeometry(500, 500)
@@ -271,7 +279,7 @@ export default function DrivingSimulation () {
     function createBuilding (x, z, width, depth, height) {
       const buildingGeometry = new THREE.BoxGeometry(width, height, depth)
 
-      // Bright and vibrant modern building palette - no dark tones
+      // Improved building materials with better light reflection parameters
       const modernColors = [
         // Bright glass-like colors
         0x88CCEE, // Sky blue glass
@@ -303,11 +311,12 @@ export default function DrivingSimulation () {
         0xF1F7B5  // Pastel yellow
       ]
 
-      // Select a random color from the bright modernized palette
+      // Improved building material settings for better lighting
       const buildingMaterial = new THREE.MeshStandardMaterial({
         color: modernColors[Math.floor(Math.random() * modernColors.length)],
-        roughness: 0.5,
-        metalness: 0.4
+        roughness: 0.3,  // Reduced from 0.5 for more reflectivity
+        metalness: 0.2,  // Reduced from 0.4 for more natural surfaces
+        envMapIntensity: 0.8  // New parameter to enhance reflections
       })
 
       const building = new THREE.Mesh(buildingGeometry, buildingMaterial)
@@ -316,15 +325,17 @@ export default function DrivingSimulation () {
       building.receiveShadow = true
       scene.add(building)
 
-      // Add windows
+      // Improved window materials for better reflection
       const windowSize = 1.5
       const windowSpacing = 3
       const windowGeometry = new THREE.PlaneGeometry(windowSize, windowSize)
       const windowMaterial = new THREE.MeshStandardMaterial({
         color: 0xffffcc,
-        emissive: 0x555555,
-        roughness: 0.1,
-        metalness: 0.8
+        emissive: 0x888888,  // Brighter emissive value
+        emissiveIntensity: 0.2,
+        roughness: 0.05,  // Reduced from 0.1 for more glossy windows
+        metalness: 0.9,  // Increased slightly for more reflective windows
+        envMapIntensity: 1.2  // Enhance reflections on windows
       })
 
       // Front windows
