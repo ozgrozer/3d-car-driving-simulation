@@ -359,17 +359,20 @@ export default function DrivingSimulation () {
       return {
         mesh: carGroup,
         direction: direction,
-        speed: 0.1 + Math.random() * 0.2
+        speed: 0.1 + Math.random() * 0.2,
+        lastTurnTime: 0,
+        turnProbability: 0.01 + Math.random() * 0.02
       }
     }
 
     // Add cars to roads
     for (let i = 0; i < 20; i++) {
-      let x, z, direction
+      let x, z, direction, movingDirection
 
       if (Math.random() > 0.5) {
         // Horizontal road
         direction = 'horizontal'
+        movingDirection = Math.random() > 0.5 ? 1 : -1 // Random direction (positive or negative)
         const roadIndex = Math.floor(Math.random() * (gridSize + 1))
         z =
           roadIndex * (blockSize + streetWidth) -
@@ -380,6 +383,7 @@ export default function DrivingSimulation () {
       } else {
         // Vertical road
         direction = 'vertical'
+        movingDirection = Math.random() > 0.5 ? 1 : -1 // Random direction (positive or negative)
         const roadIndex = Math.floor(Math.random() * (gridSize + 1))
         x =
           roadIndex * (blockSize + streetWidth) -
@@ -389,7 +393,21 @@ export default function DrivingSimulation () {
         z = (Math.random() - 0.5) * citySize
       }
 
-      cars.push(createCar(x, z, direction))
+      const car = createCar(x, z, direction)
+      car.speed *= movingDirection // Apply direction to speed
+      car.lastTurnTime = 0 // Track when the car last turned
+      car.turnProbability = 0.01 + Math.random() * 0.02 // Different turn probabilities for each car
+
+      // Rotate car if moving in negative direction
+      if (movingDirection < 0) {
+        if (direction === 'horizontal') {
+          car.mesh.rotation.y += Math.PI
+        } else {
+          car.mesh.rotation.y += Math.PI
+        }
+      }
+
+      cars.push(car)
     }
 
     // Create people
@@ -477,7 +495,7 @@ export default function DrivingSimulation () {
     }
 
     // Create player car
-    function createPlayerCar() {
+    function createPlayerCar () {
       const carGroup = new THREE.Group()
 
       // Car body - slightly larger and sportier than regular cars
@@ -580,12 +598,12 @@ export default function DrivingSimulation () {
       playerCar.position.x - Math.sin(playerCar.rotation.y) * 12,
       playerCar.position.y + 5,
       playerCar.position.z - Math.cos(playerCar.rotation.y) * 12
-    );
-    camera.position.copy(initialCameraPosition);
-    camera.lookAt(playerCar.position);
+    )
+    camera.position.copy(initialCameraPosition)
+    camera.lookAt(playerCar.position)
 
     // Disable orbit controls completely
-    controls.enabled = false;
+    controls.enabled = false
 
     // Animation loop
     function animate () {
@@ -637,35 +655,186 @@ export default function DrivingSimulation () {
 
       // Update camera to follow car - improved version
       // Set camera directly behind car at fixed distance - more reliable approach
-      const cameraDistance = 15; // Increased for better visibility
-      const cameraHeight = 6;    // Slightly higher for better view
+      const cameraDistance = 15 // Increased for better visibility
+      const cameraHeight = 6 // Slightly higher for better view
 
       // Calculate position directly rather than using lerp
       camera.position.set(
         playerCar.position.x - Math.sin(playerCar.rotation.y) * cameraDistance,
         playerCar.position.y + cameraHeight,
         playerCar.position.z - Math.cos(playerCar.rotation.y) * cameraDistance
-      );
+      )
 
       // Look at a point slightly above the car
       const carLookPoint = new THREE.Vector3(
         playerCar.position.x,
         playerCar.position.y + 1,
         playerCar.position.z
-      );
-      camera.lookAt(carLookPoint);
+      )
+      camera.lookAt(carLookPoint)
 
       // Update car positions
       cars.forEach(car => {
+        // Increment turn timer
+        car.lastTurnTime++
+
         if (car.direction === 'horizontal') {
           car.mesh.position.x += car.speed
-          if (car.mesh.position.x > citySize / 2) {
-            car.mesh.position.x = -citySize / 2
+
+          // Check if car should turn at an intersection inside the city
+          const isNearIntersection = Math.abs(Math.round((car.mesh.position.x + citySize / 2) / (blockSize + streetWidth)) *
+            (blockSize + streetWidth) - (car.mesh.position.x + citySize / 2)) < 1
+
+          if (isNearIntersection && car.lastTurnTime > 100 && Math.random() < car.turnProbability) {
+            // Find the nearest road intersection
+            const nearestRoadIndex = Math.round((car.mesh.position.z + citySize / 2) / (blockSize + streetWidth))
+            const nearestRoadZ = nearestRoadIndex * (blockSize + streetWidth) - citySize / 2 - streetWidth / 2 + streetWidth / 2
+
+            // Make sure we're not at the edge of the grid
+            if (nearestRoadIndex >= 0 && nearestRoadIndex <= gridSize) {
+              // Randomly choose to turn left or right
+              const turnDirection = Math.random() > 0.5 ? 1 : -1
+
+              // Snap to the intersection
+              car.mesh.position.x = Math.round((car.mesh.position.x + citySize / 2) / (blockSize + streetWidth)) *
+                (blockSize + streetWidth) - citySize / 2
+
+              // Adjust to the nearest road
+              car.mesh.position.z = nearestRoadZ
+
+              // Update direction and rotation
+              car.direction = 'vertical'
+              car.speed = Math.abs(car.speed) * turnDirection
+
+              // Set proper rotation based on new direction
+              if (turnDirection > 0) {
+                // Turn south
+                car.mesh.rotation.y = car.speed > 0 ? 0 : Math.PI
+              } else {
+                // Turn north
+                car.mesh.rotation.y = car.speed > 0 ? Math.PI : 0
+              }
+
+              // Reset turn timer
+              car.lastTurnTime = 0
+            }
+          }
+
+          // Check if car reached the edge of the city
+          if ((car.speed > 0 && car.mesh.position.x > citySize / 2) ||
+              (car.speed < 0 && car.mesh.position.x < -citySize / 2)) {
+
+            // Find the nearest road intersection
+            const nearestRoadIndex = Math.round((car.mesh.position.z + citySize / 2) / (blockSize + streetWidth))
+            const nearestRoadZ = nearestRoadIndex * (blockSize + streetWidth) - citySize / 2 - streetWidth / 2 + streetWidth / 2
+
+            // Randomly choose to turn left or right
+            const turnDirection = Math.random() > 0.5 ? 1 : -1
+
+            // Position the car at the intersection
+            if (car.speed > 0) {
+              car.mesh.position.x = citySize / 2 - 2
+            } else {
+              car.mesh.position.x = -citySize / 2 + 2
+            }
+
+            // Adjust to the nearest road
+            car.mesh.position.z = nearestRoadZ
+
+            // Update direction and rotation
+            car.direction = 'vertical'
+            car.speed = Math.abs(car.speed) * turnDirection
+
+            // Set proper rotation based on new direction
+            if (turnDirection > 0) {
+              // Turn south
+              car.mesh.rotation.y = car.speed > 0 ? 0 : Math.PI
+            } else {
+              // Turn north
+              car.mesh.rotation.y = car.speed > 0 ? Math.PI : 0
+            }
+
+            // Reset turn timer
+            car.lastTurnTime = 0
           }
         } else {
           car.mesh.position.z += car.speed
-          if (car.mesh.position.z > citySize / 2) {
-            car.mesh.position.z = -citySize / 2
+
+          // Check if car should turn at an intersection inside the city
+          const isNearIntersection = Math.abs(Math.round((car.mesh.position.z + citySize / 2) / (blockSize + streetWidth)) *
+            (blockSize + streetWidth) - (car.mesh.position.z + citySize / 2)) < 1
+
+          if (isNearIntersection && car.lastTurnTime > 100 && Math.random() < car.turnProbability) {
+            // Find the nearest road intersection
+            const nearestRoadIndex = Math.round((car.mesh.position.x + citySize / 2) / (blockSize + streetWidth))
+            const nearestRoadX = nearestRoadIndex * (blockSize + streetWidth) - citySize / 2 - streetWidth / 2 + streetWidth / 2
+
+            // Make sure we're not at the edge of the grid
+            if (nearestRoadIndex >= 0 && nearestRoadIndex <= gridSize) {
+              // Randomly choose to turn left or right
+              const turnDirection = Math.random() > 0.5 ? 1 : -1
+
+              // Snap to the intersection
+              car.mesh.position.z = Math.round((car.mesh.position.z + citySize / 2) / (blockSize + streetWidth)) *
+                (blockSize + streetWidth) - citySize / 2
+
+              // Adjust to the nearest road
+              car.mesh.position.x = nearestRoadX
+
+              // Update direction and rotation
+              car.direction = 'horizontal'
+              car.speed = Math.abs(car.speed) * turnDirection
+
+              // Set proper rotation based on new direction
+              if (turnDirection > 0) {
+                // Turn east
+                car.mesh.rotation.y = car.speed > 0 ? Math.PI / 2 : -Math.PI / 2
+              } else {
+                // Turn west
+                car.mesh.rotation.y = car.speed > 0 ? -Math.PI / 2 : Math.PI / 2
+              }
+
+              // Reset turn timer
+              car.lastTurnTime = 0
+            }
+          }
+
+          // Check if car reached the edge of the city
+          if ((car.speed > 0 && car.mesh.position.z > citySize / 2) ||
+              (car.speed < 0 && car.mesh.position.z < -citySize / 2)) {
+
+            // Find the nearest road intersection
+            const nearestRoadIndex = Math.round((car.mesh.position.x + citySize / 2) / (blockSize + streetWidth))
+            const nearestRoadX = nearestRoadIndex * (blockSize + streetWidth) - citySize / 2 - streetWidth / 2 + streetWidth / 2
+
+            // Randomly choose to turn left or right
+            const turnDirection = Math.random() > 0.5 ? 1 : -1
+
+            // Position the car at the intersection
+            if (car.speed > 0) {
+              car.mesh.position.z = citySize / 2 - 2
+            } else {
+              car.mesh.position.z = -citySize / 2 + 2
+            }
+
+            // Adjust to the nearest road
+            car.mesh.position.x = nearestRoadX
+
+            // Update direction and rotation
+            car.direction = 'horizontal'
+            car.speed = Math.abs(car.speed) * turnDirection
+
+            // Set proper rotation based on new direction
+            if (turnDirection > 0) {
+              // Turn east
+              car.mesh.rotation.y = car.speed > 0 ? Math.PI / 2 : -Math.PI / 2
+            } else {
+              // Turn west
+              car.mesh.rotation.y = car.speed > 0 ? -Math.PI / 2 : Math.PI / 2
+            }
+
+            // Reset turn timer
+            car.lastTurnTime = 0
           }
         }
       })
