@@ -244,14 +244,14 @@ export default function DrivingSimulation () {
     directionalLight.shadow.mapSize.height = 2048
     directionalLight.shadow.camera.near = 0.5
     directionalLight.shadow.camera.far = 500
-    directionalLight.shadow.camera.left = -100
-    directionalLight.shadow.camera.right = 100
-    directionalLight.shadow.camera.top = 100
-    directionalLight.shadow.camera.bottom = -100
+    directionalLight.shadow.camera.left = -150
+    directionalLight.shadow.camera.right = 150
+    directionalLight.shadow.camera.top = 150
+    directionalLight.shadow.camera.bottom = -150
     scene.add(directionalLight)
 
     // Ground
-    const groundGeometry = new THREE.PlaneGeometry(300, 300)
+    const groundGeometry = new THREE.PlaneGeometry(500, 500)
     const groundMaterial = new THREE.MeshStandardMaterial({
       color: 0x1a5e1a,
       roughness: 0.8
@@ -262,7 +262,7 @@ export default function DrivingSimulation () {
     scene.add(ground)
 
     // City grid
-    const gridSize = 8
+    const gridSize = 15
     const blockSize = 20
     const streetWidth = 10
     const citySize = gridSize * (blockSize + streetWidth)
@@ -645,7 +645,7 @@ export default function DrivingSimulation () {
     }
 
     // Add cars to roads
-    for (let i = 0; i < 30; i++) {
+    for (let i = 0; i < 65; i++) {
       let x, z, direction, movingDirection
 
       if (Math.random() > 0.5) {
@@ -744,7 +744,7 @@ export default function DrivingSimulation () {
     }
 
     // Add people to sidewalks
-    for (let i = 0; i < 50; i++) {
+    for (let i = 0; i < 100; i++) {
       let x, z
 
       // Position people along sidewalks
@@ -966,7 +966,7 @@ export default function DrivingSimulation () {
       }
 
       // Keep player within bounds - updated for larger ground
-      const groundHalfSize = 150  // Half of 300 (new ground plane size)
+      const groundHalfSize = 250  // Half of 500 (new ground plane size)
       playerCar.position.x = Math.max(
         Math.min(playerCar.position.x, groundHalfSize),
         -groundHalfSize
