@@ -23,7 +23,7 @@ export default function DrivingSimulation () {
     let isBrakeSoundPlaying = false
 
     // Initialize audio context
-    function initAudio() {
+    function initAudio () {
       audioContext = new (window.AudioContext || window.webkitAudioContext)()
 
       // Create engine sound (oscillator-based)
@@ -38,7 +38,7 @@ export default function DrivingSimulation () {
     }
 
     // Create and start engine sound
-    function startEngineSound() {
+    function startEngineSound () {
       if (!audioContext) initAudio()
 
       if (!isEngineSoundPlaying) {
@@ -66,11 +66,17 @@ export default function DrivingSimulation () {
     }
 
     // Stop engine sound
-    function stopEngineSound() {
+    function stopEngineSound () {
       if (isEngineSoundPlaying) {
         // Fade out to avoid clicks
-        engineGainNode.gain.setValueAtTime(engineGainNode.gain.value, audioContext.currentTime)
-        engineGainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.1)
+        engineGainNode.gain.setValueAtTime(
+          engineGainNode.gain.value,
+          audioContext.currentTime
+        )
+        engineGainNode.gain.linearRampToValueAtTime(
+          0,
+          audioContext.currentTime + 0.1
+        )
 
         // Stop after fade-out
         setTimeout(() => {
@@ -81,7 +87,7 @@ export default function DrivingSimulation () {
     }
 
     // Update engine sound based on speed
-    function updateEngineSound(speed) {
+    function updateEngineSound (speed) {
       if (!audioContext) return
 
       if (speed > 0) {
@@ -95,7 +101,10 @@ export default function DrivingSimulation () {
         const mappedFreq = baseFreq + (maxFreq - baseFreq) * (speed / maxSpeed)
 
         // Update oscillator frequency
-        engineOscillator.frequency.setValueAtTime(mappedFreq, audioContext.currentTime)
+        engineOscillator.frequency.setValueAtTime(
+          mappedFreq,
+          audioContext.currentTime
+        )
 
         // Adjust volume based on speed
         const volume = 0.05 + (speed / maxSpeed) * 0.15
@@ -106,7 +115,7 @@ export default function DrivingSimulation () {
     }
 
     // Play brake sound
-    function playBrakeSound() {
+    function playBrakeSound () {
       if (!audioContext) initAudio()
 
       if (!isBrakeSoundPlaying) {
@@ -114,7 +123,11 @@ export default function DrivingSimulation () {
 
         // Create a noise source for brake sound
         const bufferSize = audioContext.sampleRate * 0.5
-        const buffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate)
+        const buffer = audioContext.createBuffer(
+          1,
+          bufferSize,
+          audioContext.sampleRate
+        )
         const data = buffer.getChannelData(0)
 
         // Fill buffer with filtered noise
@@ -139,7 +152,10 @@ export default function DrivingSimulation () {
 
         // Set gain and play
         brakeGainNode.gain.setValueAtTime(0, audioContext.currentTime)
-        brakeGainNode.gain.linearRampToValueAtTime(0.1, audioContext.currentTime + 0.1)
+        brakeGainNode.gain.linearRampToValueAtTime(
+          0.1,
+          audioContext.currentTime + 0.1
+        )
         brakeSource.start()
 
         // Schedule stop and cleanup
@@ -150,10 +166,16 @@ export default function DrivingSimulation () {
     }
 
     // Stop brake sound
-    function stopBrakeSound() {
+    function stopBrakeSound () {
       if (isBrakeSoundPlaying) {
-        brakeGainNode.gain.setValueAtTime(brakeGainNode.gain.value, audioContext.currentTime)
-        brakeGainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.2)
+        brakeGainNode.gain.setValueAtTime(
+          brakeGainNode.gain.value,
+          audioContext.currentTime
+        )
+        brakeGainNode.gain.linearRampToValueAtTime(
+          0,
+          audioContext.currentTime + 0.2
+        )
       }
     }
 
@@ -181,9 +203,13 @@ export default function DrivingSimulation () {
     let playerSpeed = 0
     const maxSpeed = 0.5
     const acceleration = 0.001
-    const deceleration = 0.005
-    const brakeStrength = 0.03
-    const turnSpeed = 0.03
+    const deceleration = 0.001
+    const brakeStrength = 0.01
+    // Add variables for turn rate acceleration/deceleration
+    let currentTurnRate = 0
+    const maxTurnRate = 0.04
+    const turnAcceleration = 0.002
+    const turnDeceleration = 0.003
     // Add variables for speed display and odometer
     let speedKmh = 0
     let totalDistanceKm = 0
@@ -282,41 +308,41 @@ export default function DrivingSimulation () {
       // Improved building materials with better light reflection parameters
       const modernColors = [
         // Bright glass-like colors
-        0x88CCEE, // Sky blue glass
-        0x66DDAA, // Teal glass
-        0xAACCFF, // Light blue glass
-        0xDDEEFF, // Pale blue glass
+        0x88ccee, // Sky blue glass
+        0x66ddaa, // Teal glass
+        0xaaccff, // Light blue glass
+        0xddeeff, // Pale blue glass
 
         // Light contemporary colors
-        0xFFC09F, // Peach
-        0xFFEE93, // Light yellow
-        0xFCF5C7, // Cream
-        0xA0CED9, // Powder blue
+        0xffc09f, // Peach
+        0xffee93, // Light yellow
+        0xfcf5c7, // Cream
+        0xa0ced9, // Powder blue
 
         // Vibrant colors
-        0xFF9EAA, // Coral pink
-        0xADF7B6, // Mint green
-        0xFFDFD3, // Light pink
-        0x9EEBCF, // Seafoam
-        0xFDCB6E, // Sunshine yellow
-        0xFF6B6B, // Bright red
-        0xA3D9FF, // Baby blue
+        0xff9eaa, // Coral pink
+        0xadf7b6, // Mint green
+        0xffdfd3, // Light pink
+        0x9eebcf, // Seafoam
+        0xfdcb6e, // Sunshine yellow
+        0xff6b6b, // Bright red
+        0xa3d9ff, // Baby blue
 
         // Pastel tones
-        0xFFC8DD, // Pastel pink
-        0xBDE0FE, // Pastel blue
-        0xA9DEF9, // Light sky blue
-        0xD0F4DE, // Pastel green
-        0xE4C1F9, // Lavender
-        0xF1F7B5  // Pastel yellow
+        0xffc8dd, // Pastel pink
+        0xbde0fe, // Pastel blue
+        0xa9def9, // Light sky blue
+        0xd0f4de, // Pastel green
+        0xe4c1f9, // Lavender
+        0xf1f7b5 // Pastel yellow
       ]
 
       // Improved building material settings for better lighting
       const buildingMaterial = new THREE.MeshStandardMaterial({
         color: modernColors[Math.floor(Math.random() * modernColors.length)],
-        roughness: 0.3,  // Reduced from 0.5 for more reflectivity
-        metalness: 0.2,  // Reduced from 0.4 for more natural surfaces
-        envMapIntensity: 0.8  // New parameter to enhance reflections
+        roughness: 0.3, // Reduced from 0.5 for more reflectivity
+        metalness: 0.2, // Reduced from 0.4 for more natural surfaces
+        envMapIntensity: 0.8 // New parameter to enhance reflections
       })
 
       const building = new THREE.Mesh(buildingGeometry, buildingMaterial)
@@ -331,11 +357,11 @@ export default function DrivingSimulation () {
       const windowGeometry = new THREE.PlaneGeometry(windowSize, windowSize)
       const windowMaterial = new THREE.MeshStandardMaterial({
         color: 0xffffcc,
-        emissive: 0x888888,  // Brighter emissive value
+        emissive: 0x888888, // Brighter emissive value
         emissiveIntensity: 0.2,
-        roughness: 0.05,  // Reduced from 0.1 for more glossy windows
-        metalness: 0.9,  // Increased slightly for more reflective windows
-        envMapIntensity: 1.2  // Enhance reflections on windows
+        roughness: 0.05, // Reduced from 0.1 for more glossy windows
+        metalness: 0.9, // Increased slightly for more reflective windows
+        envMapIntensity: 1.2 // Enhance reflections on windows
       })
 
       // Front windows
@@ -990,19 +1016,48 @@ export default function DrivingSimulation () {
       // Calculate distance traveled in this frame (in km)
       // Only add distance when moving
       if (playerSpeed !== 0) {
-        const distanceThisFrame = Math.abs(playerSpeed) * (deltaTime / 1000) * (speedConversionFactor / 3600)
+        const distanceThisFrame =
+          Math.abs(playerSpeed) *
+          (deltaTime / 1000) *
+          (speedConversionFactor / 3600)
         totalDistanceKm += distanceThisFrame
       }
 
       // Update speedometer display
-      speedometerDiv.innerHTML = `Speed: ${Math.round(speedKmh)} km/h<br>Distance: ${totalDistanceKm.toFixed(2)} km`
+      speedometerDiv.innerHTML = `Speed: ${Math.round(
+        speedKmh
+      )} km/h<br>Distance: ${totalDistanceKm.toFixed(2)} km`
 
-      // Turning
+      // Smooth turning implementation
+      // Higher speeds = slower turning (more realistic)
+      const speedFactor =
+        1 - Math.min((Math.abs(playerSpeed) / maxSpeed) * 0.6, 0.6)
+      const effectiveMaxTurnRate = maxTurnRate * speedFactor
+
       if (keyState.a) {
-        playerCar.rotation.y += turnSpeed * (playerSpeed !== 0 ? 1 : 0)
+        // Gradually increase left turn rate
+        currentTurnRate = Math.min(
+          currentTurnRate + turnAcceleration,
+          effectiveMaxTurnRate
+        )
+      } else if (keyState.d) {
+        // Gradually increase right turn rate
+        currentTurnRate = Math.max(
+          currentTurnRate - turnAcceleration,
+          -effectiveMaxTurnRate
+        )
+      } else {
+        // Gradually return to straight driving
+        if (currentTurnRate > 0) {
+          currentTurnRate = Math.max(currentTurnRate - turnDeceleration, 0)
+        } else if (currentTurnRate < 0) {
+          currentTurnRate = Math.min(currentTurnRate + turnDeceleration, 0)
+        }
       }
-      if (keyState.d) {
-        playerCar.rotation.y -= turnSpeed * (playerSpeed !== 0 ? 1 : 0)
+
+      // Apply turn rate only when moving
+      if (playerSpeed !== 0) {
+        playerCar.rotation.y += currentTurnRate
       }
 
       // Move player car
@@ -1012,7 +1067,7 @@ export default function DrivingSimulation () {
       }
 
       // Keep player within bounds - updated for larger ground
-      const groundHalfSize = 250  // Half of 500 (new ground plane size)
+      const groundHalfSize = 250 // Half of 500 (new ground plane size)
       playerCar.position.x = Math.max(
         Math.min(playerCar.position.x, groundHalfSize),
         -groundHalfSize
@@ -1067,7 +1122,7 @@ export default function DrivingSimulation () {
           ) {
             // Find the nearest road intersection
             const nearestRoadIndex = Math.round(
-              (car.mesh.position.z + citySize / 2) / (blockSize + streetWidth)
+              (car.mesh.position.x + citySize / 2) / (blockSize + streetWidth)
             )
             const nearestRoadZ =
               nearestRoadIndex * (blockSize + streetWidth) -
