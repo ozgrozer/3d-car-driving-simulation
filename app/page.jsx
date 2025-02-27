@@ -201,7 +201,7 @@ export default function DrivingSimulation () {
     // Player car variables
     let playerCar
     let playerSpeed = 0
-    const maxSpeed = 0.5
+    const maxSpeed = 0.35
     const acceleration = 0.001
     const deceleration = 0.001
     const brakeStrength = 0.01
@@ -824,14 +824,14 @@ export default function DrivingSimulation () {
       // 10% very slow, 65% normal speeds, 25% faster cars
       const speedMultiplier = Math.random()
       if (speedMultiplier < 0.1) {
-        // Slow cars (0.05 to 0.08)
-        car.speed = 0.05 + Math.random() * 0.03
+        // Slow cars (0.03 to 0.05)
+        car.speed = 0.03 + Math.random() * 0.02
       } else if (speedMultiplier > 0.75) {
-        // Fast cars (0.3 to 0.4)
-        car.speed = 0.3 + Math.random() * 0.1
+        // Fast cars (0.09 to 0.12)
+        car.speed = 0.09 + Math.random() * 0.03
       } else {
-        // Normal cars (0.1 to 0.25)
-        car.speed = 0.1 + Math.random() * 0.15
+        // Normal cars (0.06 to 0.15)
+        car.speed = 0.06 + Math.random() * 0.09
       }
 
       car.speed *= movingDirection // Apply direction to speed
