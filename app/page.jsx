@@ -180,7 +180,7 @@ export default function DrivingSimulation () {
     let playerCar
     let playerSpeed = 0
     const maxSpeed = 0.5
-    const acceleration = 0.01
+    const acceleration = 0.001
     const deceleration = 0.005
     const brakeStrength = 0.03
     const turnSpeed = 0.03
