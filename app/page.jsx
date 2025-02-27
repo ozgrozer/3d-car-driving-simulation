@@ -21,6 +21,9 @@ export default function DrivingSimulation () {
     let engineOscillator
     let isEngineSoundPlaying = false
     let isBrakeSoundPlaying = false
+    // Add collision sound variables
+    let collisionGainNode
+    let isCollisionSoundPlaying = false
 
     // Initialize audio context
     function initAudio () {
@@ -35,6 +38,11 @@ export default function DrivingSimulation () {
       brakeGainNode = audioContext.createGain()
       brakeGainNode.gain.value = 0
       brakeGainNode.connect(audioContext.destination)
+
+      // Create collision sound
+      collisionGainNode = audioContext.createGain()
+      collisionGainNode.gain.value = 0
+      collisionGainNode.connect(audioContext.destination)
     }
 
     // Create and start engine sound
@@ -179,6 +187,73 @@ export default function DrivingSimulation () {
       }
     }
 
+    // Play collision sound with different characteristics based on collision type
+    function playCollisionSound(collisionType) {
+      if (!audioContext) initAudio()
+
+      if (!isCollisionSoundPlaying) {
+        isCollisionSoundPlaying = true
+
+        // Create collision sound based on type
+        const bufferSize = audioContext.sampleRate * 0.3; // 300ms sound
+        const buffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
+        const data = buffer.getChannelData(0);
+
+        // Fill buffer with different sound patterns based on collision type
+        for (let i = 0; i < bufferSize; i++) {
+          if (collisionType === 'building') {
+            // Heavy, low-frequency impact for buildings
+            data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufferSize, 2);
+          } else if (collisionType === 'car') {
+            // Metallic crash for cars
+            data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufferSize, 1.5)
+                    * (i % 1000 < 500 ? 1 : 0.7); // Adding some rhythmic pattern
+          } else if (collisionType === 'person') {
+            // Softer thud for people
+            data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufferSize, 4);
+          }
+        }
+
+        // Create and configure sound source
+        const collisionSource = audioContext.createBufferSource();
+        collisionSource.buffer = buffer;
+
+        // Create filters based on collision type
+        const filter = audioContext.createBiquadFilter();
+
+        if (collisionType === 'building') {
+          filter.type = 'lowpass';
+          filter.frequency.value = 400;
+          filter.Q.value = 2;
+        } else if (collisionType === 'car') {
+          filter.type = 'bandpass';
+          filter.frequency.value = 1200;
+          filter.Q.value = 5;
+        } else if (collisionType === 'person') {
+          filter.type = 'lowpass';
+          filter.frequency.value = 800;
+          filter.Q.value = 1;
+        }
+
+        // Connect source -> filter -> gain -> output
+        collisionSource.connect(filter);
+        filter.connect(collisionGainNode);
+
+        // Set gain based on collision type
+        const volume = collisionType === 'building' ? 0.4 :
+                        collisionType === 'car' ? 0.3 : 0.2;
+
+        collisionGainNode.gain.setValueAtTime(0, audioContext.currentTime);
+        collisionGainNode.gain.linearRampToValueAtTime(volume, audioContext.currentTime + 0.01);
+
+        // Start and schedule stop
+        collisionSource.start();
+        collisionSource.onended = () => {
+          isCollisionSoundPlaying = false;
+        };
+      }
+    }
+
     // Camera setup
     const camera = new THREE.PerspectiveCamera(
       75,
@@ -213,8 +288,13 @@ export default function DrivingSimulation () {
     // Add variables for speed display and odometer
     let speedKmh = 0
     let totalDistanceKm = 0
-    const speedConversionFactor = 200 // Changed from 100 to 200 to double the displayed speed
+    const speedConversionFactor = 200
     let lastTime = 0
+    // Add variables for collision handling
+    let isColliding = false
+    let collisionCooldown = 0
+    let playerHealth = 100
+    let damageIndicatorTime = 0
 
     // Event listeners for keyboard controls
     const handleKeyDown = e => {
@@ -300,6 +380,9 @@ export default function DrivingSimulation () {
     const blockSize = 20
     const streetWidth = 10
     const citySize = gridSize * (blockSize + streetWidth)
+
+    // Create array to store building collision boxes
+    const buildingBoxes = [];
 
     // Create buildings
     function createBuilding (x, z, width, depth, height) {
@@ -421,6 +504,16 @@ export default function DrivingSimulation () {
           scene.add(window2)
         }
       }
+
+      // Create collision box for the building and store it
+      const buildingBox = {
+        x: x,
+        z: z,
+        width: width,
+        depth: depth,
+        mesh: building
+      };
+      buildingBoxes.push(buildingBox);
     }
 
     // Create city blocks with buildings
@@ -1269,7 +1362,7 @@ export default function DrivingSimulation () {
     // Disable orbit controls completely
     controls.enabled = false
 
-    // Add display elements for speed and distance
+    // Add display elements for speed, distance, and health
     const speedometerDiv = document.createElement('div')
     speedometerDiv.style.position = 'absolute'
     speedometerDiv.style.bottom = '20px'
@@ -1281,8 +1374,156 @@ export default function DrivingSimulation () {
     speedometerDiv.style.fontFamily = 'Arial, sans-serif'
     speedometerDiv.style.fontSize = '16px'
     speedometerDiv.style.zIndex = '1000'
-    speedometerDiv.innerHTML = 'Speed: 0 km/h<br>Distance: 0.0 km'
+    speedometerDiv.innerHTML = 'Speed: 0 km/h<br>Distance: 0.0 km<br>Health: 100%'
     document.body.appendChild(speedometerDiv)
+
+    // Create damage indicator overlay
+    const damageIndicator = document.createElement('div')
+    damageIndicator.style.position = 'absolute'
+    damageIndicator.style.top = '0'
+    damageIndicator.style.left = '0'
+    damageIndicator.style.width = '100%'
+    damageIndicator.style.height = '100%'
+    damageIndicator.style.backgroundColor = 'rgba(255, 0, 0, 0)' // Start transparent
+    damageIndicator.style.pointerEvents = 'none' // Allow clicks to pass through
+    damageIndicator.style.transition = 'background-color 0.2s ease'
+    damageIndicator.style.zIndex = '999'
+    document.body.appendChild(damageIndicator)
+
+    // Check for collisions between player car and other objects
+    function checkCollisions() {
+      // Reset collision flag
+      const wasColliding = isColliding;
+      isColliding = false;
+
+      // Don't check during cooldown
+      if (collisionCooldown > 0) {
+        collisionCooldown--;
+        return;
+      }
+
+      // Create player car bounding box
+      const playerRadius = 1.0; // Approximate car radius
+      const playerBox = {
+        minX: playerCar.position.x - playerRadius,
+        maxX: playerCar.position.x + playerRadius,
+        minZ: playerCar.position.z - playerRadius * 2,
+        maxZ: playerCar.position.z + playerRadius * 2
+      };
+
+      // Check collision with buildings
+      for (let i = 0; i < buildingBoxes.length; i++) {
+        const building = buildingBoxes[i];
+        const buildingBox = {
+          minX: building.x - building.width / 2,
+          maxX: building.x + building.width / 2,
+          minZ: building.z - building.depth / 2,
+          maxZ: building.z + building.depth / 2
+        };
+
+        if (boxesIntersect(playerBox, buildingBox)) {
+          handleCollision('building', building);
+          return; // Exit after handling one collision
+        }
+      }
+
+      // Check collision with AI cars
+      for (let i = 0; i < cars.length; i++) {
+        const car = cars[i];
+        const carRadius = car.isBus ? 1.6 : 0.8; // Buses are bigger
+        const carBox = {
+          minX: car.mesh.position.x - carRadius,
+          maxX: car.mesh.position.x + carRadius,
+          minZ: car.mesh.position.z - carRadius * 2,
+          maxZ: car.mesh.position.z + carRadius * 2
+        };
+
+        if (boxesIntersect(playerBox, carBox)) {
+          handleCollision('car', car);
+          return; // Exit after handling one collision
+        }
+      }
+
+      // Check collision with people
+      for (let i = 0; i < people.length; i++) {
+        const person = people[i];
+        const personRadius = 0.2;
+        const personBox = {
+          minX: person.mesh.position.x - personRadius,
+          maxX: person.mesh.position.x + personRadius,
+          minZ: person.mesh.position.z - personRadius,
+          maxZ: person.mesh.position.z + personRadius
+        };
+
+        if (boxesIntersect(playerBox, personBox)) {
+          handleCollision('person', person);
+          return; // Exit after handling one collision
+        }
+      }
+    }
+
+    // Check if two bounding boxes intersect
+    function boxesIntersect(box1, box2) {
+      return box1.minX <= box2.maxX &&
+             box1.maxX >= box2.minX &&
+             box1.minZ <= box2.maxZ &&
+             box1.maxZ >= box2.minZ;
+    }
+
+    // Handle collision response
+    function handleCollision(type, object) {
+      // Set collision flags
+      isColliding = true;
+      collisionCooldown = 15; // Frames before checking collisions again
+
+      // Calculate collision speed impact
+      const impactForce = Math.abs(playerSpeed) * 300;
+
+      // Play appropriate sound
+      playCollisionSound(type);
+
+      // Apply damage based on type and speed
+      let damageAmount = 0;
+
+      if (type === 'building') {
+        // Buildings cause the most damage
+        damageAmount = Math.min(Math.floor(impactForce * 1.5), 40);
+
+        // Reduce player speed significantly
+        playerSpeed *= -0.3; // Bounce back
+      }
+      else if (type === 'car') {
+        // Cars cause moderate damage
+        damageAmount = Math.min(Math.floor(impactForce), 25);
+
+        // Reduce player speed moderately
+        playerSpeed *= -0.5; // Bounce back
+      }
+      else if (type === 'person') {
+        // People cause less damage
+        damageAmount = Math.min(Math.floor(impactForce * 0.5), 15);
+
+        // Reduce player speed slightly
+        playerSpeed *= 0.7; // Slow down but don't reverse
+      }
+
+      // Apply damage only if moving fast enough
+      if (Math.abs(playerSpeed) > 0.05) {
+        playerHealth = Math.max(0, playerHealth - damageAmount);
+
+        // Update damage indicator
+        if (damageAmount > 0) {
+          damageIndicatorTime = 60; // Frames to show damage indicator
+
+          // Set indicator color based on damage amount
+          const opacity = Math.min(0.7, damageAmount / 40);
+          damageIndicator.style.backgroundColor = `rgba(255, 0, 0, ${opacity})`;
+        }
+
+        // Add camera shake effect
+        camera.position.y += (Math.random() - 0.5) * damageAmount * 0.1;
+      }
+    }
 
     // Animation loop
     function animate () {
@@ -1292,28 +1533,32 @@ export default function DrivingSimulation () {
 
       window.requestAnimationFrame(animate)
 
-      // Handle player car controls
-      if (keyState.w) {
-        // Accelerate forward
-        playerSpeed = Math.min(playerSpeed + acceleration, maxSpeed)
-      } else if (keyState.s) {
-        // Accelerate backward
-        playerSpeed = Math.max(playerSpeed - acceleration, -maxSpeed / 1.5)
-      } else {
-        // Natural deceleration when not pressing forward/backward
-        if (playerSpeed > 0) {
-          playerSpeed = Math.max(playerSpeed - deceleration, 0)
-        } else if (playerSpeed < 0) {
-          playerSpeed = Math.min(playerSpeed + deceleration, 0)
+      // Check for collisions
+      checkCollisions();
+
+      // Update damage indicator
+      if (damageIndicatorTime > 0) {
+        damageIndicatorTime--;
+        if (damageIndicatorTime === 0) {
+          damageIndicator.style.backgroundColor = 'rgba(255, 0, 0, 0)';
         }
       }
 
-      // Apply brakes
-      if (keyState.space) {
-        if (playerSpeed > 0) {
-          playerSpeed = Math.max(playerSpeed - brakeStrength, 0)
-        } else if (playerSpeed < 0) {
-          playerSpeed = Math.min(playerSpeed + brakeStrength, 0)
+      // Handle player car controls (only if not currently in a collision)
+      if (!isColliding) {
+        if (keyState.w) {
+          // Accelerate forward
+          playerSpeed = Math.min(playerSpeed + acceleration, maxSpeed)
+        } else if (keyState.s) {
+          // Accelerate backward
+          playerSpeed = Math.max(playerSpeed - acceleration, -maxSpeed / 1.5)
+        } else {
+          // Natural deceleration when not pressing forward/backward
+          if (playerSpeed > 0) {
+            playerSpeed = Math.max(playerSpeed - deceleration, 0)
+          } else if (playerSpeed < 0) {
+            playerSpeed = Math.min(playerSpeed + deceleration, 0)
+          }
         }
       }
 
@@ -1333,10 +1578,10 @@ export default function DrivingSimulation () {
         totalDistanceKm += distanceThisFrame
       }
 
-      // Update speedometer display
+      // Update speedometer display with health
       speedometerDiv.innerHTML = `Speed: ${Math.round(
         speedKmh
-      )} km/h<br>Distance: ${totalDistanceKm.toFixed(2)} km`
+      )} km/h<br>Distance: ${totalDistanceKm.toFixed(2)} km<br>Health: ${playerHealth}%`
 
       // Smooth turning implementation
       // Higher speeds = slower turning (more realistic)
@@ -1743,6 +1988,7 @@ export default function DrivingSimulation () {
       window.removeEventListener('keyup', handleKeyUp)
       mountRef.current.removeChild(renderer.domElement)
       document.body.removeChild(speedometerDiv)
+      document.body.removeChild(damageIndicator)
 
       // Clean up audio
       if (audioContext) {
