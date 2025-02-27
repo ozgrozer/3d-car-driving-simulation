@@ -3,7 +3,7 @@ import { Toaster } from '@/components/ui/sonner'
 import './globals.css'
 
 export const metadata = {
-  title: 'next-tailwind-shadcn'
+  title: '3D Car Driving Simulation'
 }
 
 export default function RootLayout ({ children }) {
