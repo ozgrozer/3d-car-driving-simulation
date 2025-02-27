@@ -655,6 +655,53 @@ export default function DrivingSimulation () {
       );
       camera.lookAt(carLookPoint);
 
+      // Update car positions
+      cars.forEach(car => {
+        if (car.direction === 'horizontal') {
+          car.mesh.position.x += car.speed
+          if (car.mesh.position.x > citySize / 2) {
+            car.mesh.position.x = -citySize / 2
+          }
+        } else {
+          car.mesh.position.z += car.speed
+          if (car.mesh.position.z > citySize / 2) {
+            car.mesh.position.z = -citySize / 2
+          }
+        }
+      })
+
+      // Update people positions
+      people.forEach(person => {
+        person.walkCycle += 0.1
+
+        // Simple walking animation
+        const leg1 = person.mesh.children[2]
+        const leg2 = person.mesh.children[3]
+        leg1.rotation.x = Math.sin(person.walkCycle) * 0.5
+        leg2.rotation.x = Math.sin(person.walkCycle + Math.PI) * 0.5
+
+        // Move person
+        person.mesh.position.x += Math.cos(person.direction) * person.speed
+        person.mesh.position.z += Math.sin(person.direction) * person.speed
+
+        // Keep within city bounds
+        if (person.mesh.position.x > citySize / 2) {
+          person.direction = Math.PI - person.direction
+        }
+        if (person.mesh.position.x < -citySize / 2) {
+          person.direction = Math.PI - person.direction
+        }
+        if (person.mesh.position.z > citySize / 2) {
+          person.direction = -person.direction
+        }
+        if (person.mesh.position.z < -citySize / 2) {
+          person.direction = -person.direction
+        }
+
+        // Update rotation to match direction
+        person.mesh.rotation.y = person.direction
+      })
+
       // Don't call controls.update() since we disabled orbit controls
       renderer.render(scene, camera)
     }
