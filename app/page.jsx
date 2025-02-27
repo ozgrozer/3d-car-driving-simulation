@@ -819,6 +819,21 @@ export default function DrivingSimulation () {
       }
 
       const car = createCar(x, z, direction)
+
+      // Create diverse speed distribution:
+      // 10% very slow, 65% normal speeds, 25% faster cars
+      const speedMultiplier = Math.random()
+      if (speedMultiplier < 0.1) {
+        // Slow cars (0.05 to 0.08)
+        car.speed = 0.05 + Math.random() * 0.03
+      } else if (speedMultiplier > 0.75) {
+        // Fast cars (0.3 to 0.4)
+        car.speed = 0.3 + Math.random() * 0.1
+      } else {
+        // Normal cars (0.1 to 0.25)
+        car.speed = 0.1 + Math.random() * 0.15
+      }
+
       car.speed *= movingDirection // Apply direction to speed
       car.lastTurnTime = 0 // Track when the car last turned
       car.turnProbability = 0.01 + Math.random() * 0.02 // Different turn probabilities for each car
@@ -927,6 +942,21 @@ export default function DrivingSimulation () {
       }
 
       const person = createPerson(x, z)
+
+      // Create diverse walking speeds:
+      // 15% very slow, 60% normal speeds, 25% fast walkers
+      const speedType = Math.random()
+      if (speedType < 0.15) {
+        // Slow walkers (0.005 to 0.015)
+        person.speed = 0.005 + Math.random() * 0.01
+      } else if (speedType > 0.75) {
+        // Fast walkers (0.06 to 0.09)
+        person.speed = 0.06 + Math.random() * 0.03
+      } else {
+        // Normal walkers (0.02 to 0.04)
+        person.speed = 0.02 + Math.random() * 0.02
+      }
+
       // Set direction based on orientation
       if (sidewalkOrientation === 'horizontal') {
         person.direction = Math.random() > 0.5 ? 0 : Math.PI // East or West
